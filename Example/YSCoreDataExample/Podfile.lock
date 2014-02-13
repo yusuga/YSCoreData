@@ -1,0 +1,10 @@
+PODS:
+  - YSFileManager (0.0.2)
+
+DEPENDENCIES:
+  - YSFileManager
+
+SPEC CHECKSUMS:
+  YSFileManager: 00787fd5e350f14c3601e3ec3aad7e4cb7eefbc9
+
+COCOAPODS: 0.29.0
