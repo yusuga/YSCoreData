@@ -5,8 +5,9 @@ CoreDataをマルチスレッドでInsertとFetchを行うためのヘルパー�
 概要
 ----------
 
-[Multi-Context CoreData | Cocoanetics](http://www.cocoanetics.com/2012/07/multi-context-coredata/)を参考にしました。
+[Multi-Context CoreData | Cocoanetics](http://www.cocoanetics.com/2012/07/multi-context-coredata/)を参考に実装しました。
 ![http://www.cocoanetics.com/2012/07/multi-context-coredata/](http://cl.ly/image/322H2D2F3I3K/Bildschirmfoto-2012-07-18-um-4.14.55-PM.png)
+<[Cocoanetics](http://www.cocoanetics.com/2012/07/multi-context-coredata/)>
 
 このような実装です。
 
@@ -15,6 +16,15 @@ CoreDataをマルチスレッドでInsertとFetchを行うためのヘルパー�
 使用方法
 ----------
 Overrideでの使用を想定しています。詳しくはExampleをご参考下さい。ExampleではTwitterを想定して実装しています。
+
+###Podspec
+CocoaPods/Specsに追加されてないので私のPodspecを追加する必要があります。
+
+    pod repo add yusuga git:github.com/yusuga/podspec.git
+    
+###Podfile
+
+    pod 'YSCoreData'
 
 License
 ----------
