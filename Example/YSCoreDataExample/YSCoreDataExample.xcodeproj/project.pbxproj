@@ -97,6 +97,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B821967918B12098001D5C0E /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				B854F57E18AC94F60070727A /* Twitter.xcdatamodeld */,
+				B854F58D18AC9AC20070727A /* Tweet.h */,
+				B854F58E18AC9AC20070727A /* Tweet.m */,
+				B854F59018AC9AC30070727A /* User.h */,
+				B854F59118AC9AC30070727A /* User.m */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
 		B854F53618AC84260070727A = {
 			isa = PBXGroup;
 			children = (
@@ -140,11 +152,7 @@
 				B854F58518AC95C20070727A /* ViewController.m */,
 				B854F58118AC95A60070727A /* TwitterStorage.h */,
 				B854F58218AC95A60070727A /* TwitterStorage.m */,
-				B854F57E18AC94F60070727A /* Twitter.xcdatamodeld */,
-				B854F58D18AC9AC20070727A /* Tweet.h */,
-				B854F58E18AC9AC20070727A /* Tweet.m */,
-				B854F59018AC9AC30070727A /* User.h */,
-				B854F59118AC9AC30070727A /* User.m */,
+				B821967918B12098001D5C0E /* Model */,
 				B854F55A18AC84260070727A /* Images.xcassets */,
 				B854F54918AC84260070727A /* Supporting Files */,
 			);

@@ -36,8 +36,10 @@
 
     self.tweets = [NSMutableArray array];
 
+    // データベース名を設定
     [[TwitterStorage sharedInstance] setupWithDatabaseName:@"Twitter.db"];
     
+    // ツイートの仮想なリクエストのためのID設定
     self.virtualTweetId = [[NSUserDefaults standardUserDefaults] integerForKey:kVirtualTweetId];
 }
 
@@ -76,7 +78,7 @@
         NSUInteger userId = arc4random_uniform([names count]); // ランダムなuser id
         NSString *name = [names objectAtIndex:userId];
         
-        // 超簡易なTwitterのJSON
+        // 超簡易なTwitterのJSON (本来のJSON https://dev.twitter.com/docs/api/1.1/get/statuses/show/%3Aid )
         NSDictionary *json = @{
                                @"id" : @(self.virtualTweetId + i),
                                @"text" : text,
@@ -87,19 +89,22 @@
 
         [newTweets addObject:json];
     }
+    
+    // TweetIdを更新
     self.virtualTweetId += count;
-
     NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
     [ud setInteger:self.virtualTweetId forKey:kVirtualTweetId];
     [ud synchronize];
     
 //    NSLog(@"get new tweets = \n%@", newTweets);
     
+    // 取得したツイートをCoreDataに保存
     [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets];
 }
 
 - (IBAction)fetchButtonDidPush:(id)sender
 {
+    // CoreDataからツイートを取得
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
     [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id completion:^(NSArray *tweets) {
@@ -108,6 +113,8 @@
         if (tweetsCount == 0) {
             return;
         }
+        
+        // テーブルに反映
         NSIndexSet *set = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, tweetsCount)];
         [wself.tweets insertObjects:tweets atIndexes:set];
         NSMutableArray *paths = [NSMutableArray arrayWithCapacity:tweetsCount];

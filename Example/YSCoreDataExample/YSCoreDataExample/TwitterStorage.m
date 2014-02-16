@@ -25,10 +25,12 @@
 {
     __weak typeof(self) wself = self;
     dispatch_async([[self class] insertQueue], ^{
+        // テンポラリなContextを取得
         NSManagedObjectContext *temporaryContext = [wself createTemporaryContext];
         
         NSNumber *tweetId = [tweetJson objectForKey:@"id"];
         
+        // 同一IDのTweetがあるか
         NSFetchRequest *tweetsReq = [[NSFetchRequest alloc] init];
         tweetsReq.predicate = [NSPredicate predicateWithFormat:@"id = %@", tweetId];
         tweetsReq.entity = [NSEntityDescription entityForName:@"Tweet" inManagedObjectContext:temporaryContext];
@@ -36,10 +38,12 @@
         NSError *error = nil;
         NSArray *tweetsResults = [temporaryContext executeFetchRequest:tweetsReq error:&error];
         if ([((NSNumber*)[tweetsResults firstObject]) integerValue] > 0) {
-            NSLog(@"Saved tweet");
+            // 重複したTweetは保存しない
+            NSLog(@"Saved tweet %@", tweetId);
             return;
         }
         
+        // Tweetを作成
         NSDictionary *userJson = [tweetJson objectForKey:@"user"];
         Tweet *tweet = (id)[NSEntityDescription insertNewObjectForEntityForName:@"Tweet"
                                                            inManagedObjectContext:temporaryContext];
@@ -50,6 +54,7 @@
         NSString *name = [userJson objectForKey:@"name"];
         NSNumber *userId = [userJson objectForKey:@"id"];
         
+        // 同一IDのUserがあるか
         NSFetchRequest *req = [[NSFetchRequest alloc] init];
         req.predicate = [NSPredicate predicateWithFormat:@"id = %@", userId];
         req.entity = [NSEntityDescription entityForName:@"User" inManagedObjectContext:temporaryContext];
@@ -58,11 +63,13 @@
         NSArray *fetchResults = [temporaryContext executeFetchRequest:req error:&error];
         User *user = [fetchResults firstObject];
         
+        // 同一IDのUser(保存してたUser)があればUpdate。なければ新規のUesrをInsert
         if (user) {
             NSLog(@"User update %@", userId);
             user.name = name;
         } else {
             NSLog(@"User insert");
+            // 新しいUserを作成
             user = (id)[NSEntityDescription insertNewObjectForEntityForName:@"User"
                                                       inManagedObjectContext:tweet.managedObjectContext];
             user.id = userId;
@@ -70,6 +77,7 @@
         }
         tweet.user = user;
         
+        // コンテキストを保存。最終的にprivateWriterContextによりsqliteへ保存される
         [wself saveWithTemporaryContext:temporaryContext];
     });
 }
@@ -78,20 +86,20 @@
 {
     __weak typeof(self) wself = self;
     dispatch_async([[self class] fetchQueue], ^{
+        // maxIdから現在表示しているツイートより新しいツイートをデータベースから取得
         NSFetchRequest *request = [[NSFetchRequest alloc] init];
         if (maxId) {
             request.predicate = [NSPredicate predicateWithFormat:@"id > %@", maxId];
         }
         request.fetchLimit = limit;
-        
         NSEntityDescription *tweets = [NSEntityDescription entityForName:@"Tweet" inManagedObjectContext:wself.mainContext];
         [request setEntity:tweets];
         
-        // Order the events by creation date, most recent first.
+        // 降順にソートする指定
         NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"id" ascending:NO];
         [request setSortDescriptors:@[sortDescriptor]];
         
-        // Execute the fetch -- create a mutable copy of the result.
+        // Fetch
         NSError *error = nil;
         NSArray *fetchResults = [wself.mainContext executeFetchRequest:request error:&error];
         
