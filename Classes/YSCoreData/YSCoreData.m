@@ -67,22 +67,17 @@
     __weak typeof(self) wself = self;
     [temporaryContext performBlock:^{
         NSError *error = nil;
-        if (![temporaryContext save:&error]) {
+        if (![temporaryContext save:&error]) { // 全てのcontextに反映
             NSLog(@"Error: temporaryContext save; error = %@;", error);
         }
-        [wself.mainContext performBlock:^{
+        [wself.privateWriterContext performBlock:^{
             NSError *error = nil;
-            if (![wself.mainContext save:&error]) {
-                NSLog(@"Error: mainContext save; error = %@;", error);
+            if (![wself.privateWriterContext save:&error]) { // sqliteへ保存
+                NSLog(@"Error: privateWriterContext save; error = %@;", error);
             }
-            [wself.privateWriterContext performBlock:^{
-                NSError *error = nil;
-                if (![wself.privateWriterContext save:&error]) {
-                    NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                }
-            }];
         }];
     }];
+
 }
 
 #pragma mark - Property
