@@ -16,6 +16,20 @@
         NSLog(@"Error: %s; tweetJsons != NSArray class; tweetJsons class = %@;", __func__, NSStringFromClass([tweetJsons class]));
         return;
     }
+    /*
+        一つのコンテキストで一気にinsertした方が良いのですが、Userの重複を防ぐために一つづつ処理しています
+        一度にinsertする場合は以下。
+     
+        __weak typeof(self) wself = self;
+        dispatch_async([[self class] insertQueue], ^{
+            NSManagedObjectContext *temporaryContext = [wself createTemporaryContext];
+            for (NSDictionary *twJson in tweetJsons) {
+                // temporaryContextにinsertする処理
+            }
+            [wself saveWithTemporaryContext:temporaryContext];
+        });
+     
+     */
     for (NSDictionary *twJson in tweetJsons) {
         [self insertTweetWithTweetJson:twJson];
     }
@@ -51,7 +65,6 @@
         tweet.text = [tweetJson objectForKey:@"text"];
         tweet.user_id = [userJson objectForKey:@"id"];
         
-        NSString *name = [userJson objectForKey:@"name"];
         NSNumber *userId = [userJson objectForKey:@"id"];
         
         // 同一IDのUserがあるか
@@ -66,15 +79,16 @@
         // 同一IDのUser(保存してたUser)があればUpdate。なければ新規のUesrをInsert
         if (user) {
             NSLog(@"User update %@", userId);
-            user.name = name;
         } else {
             NSLog(@"User insert");
             // 新しいUserを作成
             user = (id)[NSEntityDescription insertNewObjectForEntityForName:@"User"
                                                       inManagedObjectContext:tweet.managedObjectContext];
             user.id = userId;
-            user.name = name;
         }
+        user.name = [userJson objectForKey:@"name"];
+        user.screen_name = [userJson objectForKey:@"screen_name"];
+        
         tweet.user = user;
         
         // コンテキストを保存。最終的にprivateWriterContextによりsqliteへ保存される
@@ -86,13 +100,15 @@
 {
     __weak typeof(self) wself = self;
     dispatch_async([[self class] fetchQueue], ^{
-        // maxIdから現在表示しているツイートより新しいツイートをデータベースから取得
+        NSManagedObjectContext *temporaryContext = [wself createTemporaryContext];
+        
+        // 現在表示しているツイート(maxId)より新しいツイートをデータベースから取得
         NSFetchRequest *request = [[NSFetchRequest alloc] init];
         if (maxId) {
             request.predicate = [NSPredicate predicateWithFormat:@"id > %@", maxId];
         }
         request.fetchLimit = limit;
-        NSEntityDescription *tweets = [NSEntityDescription entityForName:@"Tweet" inManagedObjectContext:wself.mainContext];
+        NSEntityDescription *tweets = [NSEntityDescription entityForName:@"Tweet" inManagedObjectContext:temporaryContext];
         [request setEntity:tweets];
         
         // 降順にソートする指定
@@ -101,14 +117,31 @@
         
         // Fetch
         NSError *error = nil;
-        NSArray *fetchResults = [wself.mainContext executeFetchRequest:request error:&error];
-        
+        NSArray *fetchResults = [temporaryContext executeFetchRequest:request error:&error];
         if (error) {
             NSLog(@"%s; error = %@;", __func__, error);
         }
-        dispatch_async(dispatch_get_main_queue(), ^{
+        
+        /*
+         FetchしたNSManagedObjectを別スレッドに渡せない(temporaryContextと共に解放される)ので
+         スレッドセーフなNSManagedObjectIDを保持する
+         */
+        NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[fetchResults count]];
+        for (NSManagedObject *obj in fetchResults) {
+            [ids addObject:obj.objectID];
+        }
+        [wself.mainContext performBlock:^{
+            /*
+             mainContext(NSMainQueueConcurrencyTypeで初期化したContext)から
+             保持していたNSManagedObjectIDを元にNSManagedObjectを取得
+             */
+             
+            NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
+            for (NSManagedObjectID *objId in ids) {
+                [fetchResults addObject:[wself.mainContext objectWithID:objId]];
+            }
             if (completion) completion(fetchResults);
-        });
+        }];
     });
 }
 

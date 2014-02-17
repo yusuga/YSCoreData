@@ -15,6 +15,7 @@
 - (void)setupWithDatabaseName:(NSString*)dbName;
 
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
+
 - (NSManagedObjectContext *)createTemporaryContext;
 - (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext;
 

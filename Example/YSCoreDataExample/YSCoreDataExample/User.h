@@ -15,6 +15,7 @@
 
 @property (nonatomic, retain) NSNumber * id;
 @property (nonatomic, retain) NSString * name;
+@property (nonatomic, retain) NSString * screen_name;
 @property (nonatomic, retain) NSSet *tweets;
 @end
 

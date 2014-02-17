@@ -9,6 +9,16 @@
 #import "YSCoreData.h"
 #import <YSFileManager/YSFileManager.h>
 
+#if DEBUG
+    #if 0
+        #define LOG_YSCOREDATA(...) NSLog(__VA_ARGS__)
+    #endif
+#endif
+
+#ifndef LOG_YSCOREDATA
+    #define LOG_YSCOREDATA(...)
+#endif
+
 @interface YSCoreData ()
 
 @property (nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
@@ -45,7 +55,8 @@
 
 - (BOOL)removeDatabase
 {
-    NSString *path = self.databasePath;
+    NSLog(@"%s", __func__);
+    NSString *path = [self databasePath];
     BOOL ret = [YSFileManager removeAtPath:path];
     [YSFileManager removeAtPath:[path stringByAppendingString:@"-shm"]];
     [YSFileManager removeAtPath:[path stringByAppendingString:@"-wal"]];
@@ -57,6 +68,7 @@
 
 - (NSManagedObjectContext *)createTemporaryContext
 {
+    LOG_YSCOREDATA(@"%s", __func__);
     NSManagedObjectContext *temporaryContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     temporaryContext.parentContext = self.mainContext;
     return temporaryContext;
@@ -65,19 +77,26 @@
 - (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
 {
     __weak typeof(self) wself = self;
-    [temporaryContext performBlock:^{
+    NSError *error = nil;
+    LOG_YSCOREDATA(@"Will save temporaryContext");
+    if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
+        NSLog(@"Error: temporaryContext save; error = %@;", error);
+    }
+    LOG_YSCOREDATA(@"Did save temporaryContext");
+    [wself.mainContext performBlock:^{
         NSError *error = nil;
-        if (![temporaryContext save:&error]) { // 全てのcontextに反映
-            NSLog(@"Error: temporaryContext save; error = %@;", error);
+        if (![wself.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
+            NSLog(@"Error: mainContext save; error = %@;", error);
         }
+        LOG_YSCOREDATA(@"Did save mainContext");
         [wself.privateWriterContext performBlock:^{
             NSError *error = nil;
             if (![wself.privateWriterContext save:&error]) { // sqliteへ保存
                 NSLog(@"Error: privateWriterContext save; error = %@;", error);
             }
+            LOG_YSCOREDATA(@"Did save privateWriterContext");
         }];
     }];
-
 }
 
 #pragma mark - Property
@@ -129,7 +148,7 @@
     if (_databaseName) {
         return _databaseName;
     }
-    return @"Test.db";
+    return @"Database.db";
 }
 
 #pragma mark - Queue
