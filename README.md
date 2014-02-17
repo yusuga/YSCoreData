@@ -1,17 +1,18 @@
 YSCoreData
 ======================
-CoreDataをマルチスレッドでInsertとFetchを行うためのヘルパーです。
+CoreDataをマルチスレッドで使用するためのヘルパーです。
 
 概要
 ----------
 
 [Multi-Context CoreData | Cocoanetics](http://www.cocoanetics.com/2012/07/multi-context-coredata/)を参考に実装しました。
 ![http://www.cocoanetics.com/2012/07/multi-context-coredata/](http://cl.ly/image/322H2D2F3I3K/Bildschirmfoto-2012-07-18-um-4.14.55-PM.png)
+
 <[Cocoanetics](http://www.cocoanetics.com/2012/07/multi-context-coredata/)>
 
 このような実装です。
 
-※ おかしなところがありましたら、ご指摘いただけると幸いです。
+※ 間違い等ご指摘いただけると幸いです。
 
 使用方法
 ----------
