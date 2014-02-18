@@ -21,7 +21,7 @@ typedef void(^YSCoreDataAysncFetchFailure)(NSError *error);
 + (instancetype)sharedInstance;
 - (void)setupWithDatabaseName:(NSString*)dbName;
 
-@property (nonatomic) NSManagedObjectContext *mainContext;
+@property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
                                    failure:(YSCoreDataAysncWriteFailure)failure;

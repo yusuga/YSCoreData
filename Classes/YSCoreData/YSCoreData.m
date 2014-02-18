@@ -74,35 +74,6 @@
     return temporaryContext;
 }
 
-- (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
-{
-    /*
-     temporaryContextのqueueから呼び出されることを前提としている
-     */
-    
-    __weak typeof(self) wself = self;
-    NSError *error = nil;
-    LOG_YSCOREDATA(@"Will save temporaryContext");    
-    if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
-        NSLog(@"Error: temporaryContext save; error = %@;", error);
-    }
-    LOG_YSCOREDATA(@"Did save temporaryContext");
-    [wself.mainContext performBlock:^{
-        NSError *error = nil;
-        if (![wself.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
-            NSLog(@"Error: mainContext save; error = %@;", error);
-        }
-        LOG_YSCOREDATA(@"Did save mainContext");
-        [wself.privateWriterContext performBlock:^{
-            NSError *error = nil;
-            if (![wself.privateWriterContext save:&error]) { // sqliteへ保存
-                NSLog(@"Error: privateWriterContext save; error = %@;", error);
-            }
-            LOG_YSCOREDATA(@"Did save privateWriterContext");
-        }];
-    }];
-}
-
 #pragma mark - Async
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure failure:(YSCoreDataAysncWriteFailure)failure
@@ -192,6 +163,37 @@
                 [fetchResults addObject:[wself.mainContext objectWithID:objId]];
             }
             if (success) success(fetchResults);
+        }];
+    }];
+}
+
+#pragma mark - Save
+
+- (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
+{
+    /*
+     temporaryContextのqueueから呼び出されることを前提としている
+     */
+    
+    __weak typeof(self) wself = self;
+    NSError *error = nil;
+    LOG_YSCOREDATA(@"Will save temporaryContext");
+    if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
+        NSLog(@"Error: temporaryContext save; error = %@;", error);
+    }
+    LOG_YSCOREDATA(@"Did save temporaryContext");
+    [wself.mainContext performBlock:^{
+        NSError *error = nil;
+        if (![wself.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
+            NSLog(@"Error: mainContext save; error = %@;", error);
+        }
+        LOG_YSCOREDATA(@"Did save mainContext");
+        [wself.privateWriterContext performBlock:^{
+            NSError *error = nil;
+            if (![wself.privateWriterContext save:&error]) { // sqliteへ保存
+                NSLog(@"Error: privateWriterContext save; error = %@;", error);
+            }
+            LOG_YSCOREDATA(@"Did save privateWriterContext");
         }];
     }];
 }
