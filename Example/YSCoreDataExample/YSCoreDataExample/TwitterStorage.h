@@ -10,13 +10,17 @@
 #import "Tweet.h"
 #import "User.h"
 
-typedef void(^TwitterStorageFetchTweetsCompletion)(NSArray *tweets);
+typedef void(^TwitterStorageFetchTweetsSuccess)(NSArray *tweets);
+typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 
 @interface TwitterStorage : YSCoreData
 
 - (void)insertTweetsWithTweetJsons:(NSArray*)tweetJsons;
 - (void)insertTweetWithTweetJson:(NSDictionary*)tweetJson;
 
-- (void)fetchTweetsLimit:(NSUInteger)limit maxId:(NSNumber *)maxId completion:(TwitterStorageFetchTweetsCompletion)completion;
+- (void)fetchTweetsLimit:(NSUInteger)limit
+                   maxId:(NSNumber *)maxId
+                 success:(TwitterStorageFetchTweetsSuccess)success
+                 failure:(TwitterStorageFetchTweetsFailure)failure;
 
 @end

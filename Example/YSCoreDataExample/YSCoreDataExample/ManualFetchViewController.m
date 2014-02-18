@@ -45,7 +45,7 @@
     // CoreDataからツイートを取得
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
-    [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id completion:^(NSArray *tweets) {
+    [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
         NSUInteger tweetsCount = [tweets count];
         NSLog(@"fetch tweets %d", tweetsCount);
         if (tweetsCount == 0) {
@@ -60,6 +60,8 @@
             [paths addObject:[NSIndexPath indexPathForRow:i inSection:0]];
         }
         [wself.tableView insertRowsAtIndexPaths:paths withRowAnimation:UITableViewRowAnimationTop];
+    } failure:^(NSError *error) {
+        NSLog(@"Failure: error = %@", error);
     }];
 }
 
