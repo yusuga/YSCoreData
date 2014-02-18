@@ -66,7 +66,7 @@
     return ret;
 }
 
-- (NSManagedObjectContext *)createTemporaryContext
+- (NSManagedObjectContext *)newTemporaryContext
 {
     LOG_YSCOREDATA(@"%s", __func__);
     NSManagedObjectContext *temporaryContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
@@ -76,9 +76,13 @@
 
 - (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
 {
+    /*
+     temporaryContextのqueueから呼び出されることを前提としている
+     */
+    
     __weak typeof(self) wself = self;
     NSError *error = nil;
-    LOG_YSCOREDATA(@"Will save temporaryContext");
+    LOG_YSCOREDATA(@"Will save temporaryContext");    
     if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
         NSLog(@"Error: temporaryContext save; error = %@;", error);
     }
@@ -95,6 +99,99 @@
                 NSLog(@"Error: privateWriterContext save; error = %@;", error);
             }
             LOG_YSCOREDATA(@"Did save privateWriterContext");
+        }];
+    }];
+}
+
+#pragma mark - Async
+
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure failure:(YSCoreDataAysncWriteFailure)failure
+{
+    NSManagedObjectContext *temporaryContext = [self newTemporaryContext];
+    
+    __weak typeof(self) wself = self;
+    [temporaryContext performBlock:^{
+        if (configure) {
+            configure(temporaryContext);
+        } else {
+            NSLog(@"Error: asyncWrite; setting == nil");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (failure) failure(nil);
+            });
+            return ;
+        }
+        
+        // コンテキストが変更されていたらを保存
+        if (temporaryContext.hasChanges) {
+            // 最終的にprivateWriterContextの-save:によりsqliteへ保存される
+            [wself saveWithTemporaryContext:temporaryContext];
+        }
+    }];
+}
+
+- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
+                                    success:(YSCoreDataAysncFetchSuccess)success
+                                    failure:(YSCoreDataAysncFetchFailure)failure
+{
+    NSManagedObjectContext *temporaryContext = [self newTemporaryContext];
+    
+    __weak typeof(self) wself = self;
+    [temporaryContext performBlock:^{
+        NSFetchRequest *request;
+        if (configure) {
+            request = configure(temporaryContext);
+        } else {
+            NSLog(@"Error: asyncFetch; setting == nil");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                failure(nil);
+            });
+            return ;
+        }
+        
+        if (request == nil) {
+            NSLog(@"Error: asyncFetch; request == nil");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (failure) failure(nil);
+            });
+            return ;
+        }
+        
+        NSError *error = nil;
+        NSArray *fetchResults = [temporaryContext executeFetchRequest:request error:&error];
+        
+        if (error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (failure) failure(error);
+            });
+            return;
+        }
+        
+        if ([fetchResults count] == 0) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (success) success(fetchResults);
+            });
+            return;
+        }
+        
+        /*
+         FetchしたNSManagedObjectを別スレッドに渡せない(temporaryContextと共に解放される)ので
+         スレッドセーフなNSManagedObjectIDを保持する
+         */
+        NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[fetchResults count]];
+        for (NSManagedObject *obj in fetchResults) {
+            [ids addObject:obj.objectID];
+        }
+        
+        [wself.mainContext performBlock:^{ // == dispatch_async(dispatch_get_main_queue(), ^{
+            /*
+             mainContext(NSMainQueueConcurrencyTypeで初期化したContext)から
+             保持していたNSManagedObjectIDを元にNSManagedObjectを取得
+             */
+            NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
+            for (NSManagedObjectID *objId in ids) {
+                [fetchResults addObject:[wself.mainContext objectWithID:objId]];
+            }
+            if (success) success(fetchResults);
         }];
     }];
 }
@@ -149,28 +246,6 @@
         return _databaseName;
     }
     return @"Database.db";
-}
-
-#pragma mark - Queue
-
-+ (dispatch_queue_t)insertQueue
-{
-    static dispatch_queue_t s_queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        s_queue = dispatch_queue_create("jp.YSCoreData.insert.queue", NULL);
-    });
-    return s_queue;
-}
-
-+ (dispatch_queue_t)fetchQueue
-{
-    static dispatch_queue_t s_queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        s_queue = dispatch_queue_create("jp.YSCoreData.fetch.queue", NULL);
-    });
-    return s_queue;
 }
 
 @end
