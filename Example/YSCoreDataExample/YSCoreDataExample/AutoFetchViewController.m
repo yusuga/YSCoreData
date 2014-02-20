@@ -32,7 +32,7 @@
     
     self.getTweetLimit = 1;
 
-    NSError *error;
+    NSError *error = nil;
     if (![[self fetchedResultsController] performFetch:&error]) {
         NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
     }

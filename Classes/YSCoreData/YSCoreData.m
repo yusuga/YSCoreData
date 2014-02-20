@@ -198,6 +198,18 @@
     }];
 }
 
+- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName
+{
+    NSFetchRequest* request = [[NSFetchRequest alloc] init];
+    [request setEntity:[NSEntityDescription entityForName:entityName
+                                   inManagedObjectContext:self.mainContext]];
+    [request setIncludesSubentities:NO];
+    
+    NSError* error = nil;
+    NSUInteger count = [self.mainContext countForFetchRequest:request error:&error];
+    return count == NSNotFound ? 0 : count;
+}
+
 #pragma mark - Property
 
 - (NSPersistentStoreCoordinator *)persistentStoreCoordinator

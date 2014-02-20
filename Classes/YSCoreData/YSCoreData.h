@@ -32,4 +32,6 @@ typedef void(^YSCoreDataAysncFetchFailure)(NSError *error);
 
 - (BOOL)removeDatabase;
 
+- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
+
 @end
