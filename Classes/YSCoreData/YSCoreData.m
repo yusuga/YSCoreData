@@ -105,6 +105,8 @@
             [wself saveWithTemporaryContext:tempContext
                         didMergeMainContext:success
                               didSaveSQLite:nil failure:failure];
+        } else {
+            if (success) success();
         }
     }];
 }
