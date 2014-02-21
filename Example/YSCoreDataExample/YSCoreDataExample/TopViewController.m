@@ -20,7 +20,7 @@
 
 - (IBAction)removeDatabaseButtonDidPush:(id)sender
 {
-    [[TwitterStorage sharedInstance] removeDatabase];
+    [[TwitterStorage sharedInstance] deleteDatabase];
     [TwitterRequest resetState];
     
     /**

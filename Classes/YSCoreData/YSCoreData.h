@@ -30,7 +30,7 @@ typedef void(^YSCoreDataAysncFetchFailure)(NSError *error);
                                   success:(YSCoreDataAysncFetchSuccess)success
                                   failure:(YSCoreDataAysncFetchFailure)failure;
 
-- (BOOL)removeDatabase;
+- (BOOL)deleteDatabase;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 

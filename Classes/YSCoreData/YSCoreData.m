@@ -53,7 +53,7 @@
     return [YSFileManager documentDirectoryWithAppendingPathComponent:self.databaseName];
 }
 
-- (BOOL)removeDatabase
+- (BOOL)deleteDatabase
 {
     NSLog(@"%s", __func__);
     NSString *path = [self databasePath];
