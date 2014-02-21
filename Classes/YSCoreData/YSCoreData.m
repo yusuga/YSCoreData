@@ -106,6 +106,7 @@
                         didMergeMainContext:success
                               didSaveSQLite:nil failure:failure];
         } else {
+            LOG_YSCOREDATA(@"tempContext.hasChanges == NO");
             if (success) success();
         }
     }];
@@ -174,6 +175,7 @@
             for (NSManagedObjectID *objId in ids) {
                 [fetchResults addObject:[wself.mainContext objectWithID:objId]];
             }
+            LOG_YSCOREDATA(@"Success: Fetch %@", @([fetchResults count]));
             if (success) success(fetchResults);
         }];
     }];
@@ -280,6 +282,7 @@
 - (NSPersistentStoreCoordinator *)persistentStoreCoordinator
 {
     if (_persistentStoreCoordinator == nil) {
+        LOG_YSCOREDATA(@"Init %s", __func__);
         NSURL *storeUrl = [NSURL fileURLWithPath:[self databasePath]];
         NSError *error = nil;
         _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:self.managedObjectModel];
@@ -296,6 +299,7 @@
 - (NSManagedObjectModel *)managedObjectModel
 {
     if (_managedObjectModel == nil) {
+        LOG_YSCOREDATA(@"Init %s", __func__);
         _managedObjectModel = [NSManagedObjectModel mergedModelFromBundles:nil];
     }
     return _managedObjectModel;
@@ -304,6 +308,7 @@
 - (NSManagedObjectContext *)privateWriterContext
 {
     if (_privateWriterContext == nil) {
+        LOG_YSCOREDATA(@"Init %s", __func__);
         _privateWriterContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
         _privateWriterContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
     }
@@ -313,6 +318,7 @@
 - (NSManagedObjectContext *)mainContext
 {
     if (_mainContext == nil) {
+        LOG_YSCOREDATA(@"Init %s", __func__);
         _mainContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         _mainContext.parentContext = self.privateWriterContext;
     }
