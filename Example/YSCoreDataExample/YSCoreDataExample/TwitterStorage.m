@@ -87,7 +87,7 @@
         user.screen_name = [userJson objectForKey:@"screen_name"];
         
         tweet.user = user;
-    } failure:^(NSError *error) {
+    } success:nil failure:^(NSError *error) {
         NSLog(@"Failure: error = %@", error);
     }];
 }

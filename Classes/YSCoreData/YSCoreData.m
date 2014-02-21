@@ -81,14 +81,16 @@
 
 #pragma mark - Async
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure failure:(YSCoreDataFailure)failure
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
+                                     success:(void (^)(void))success
+                                     failure:(YSCoreDataFailure)failure
 {
-    NSManagedObjectContext *temporaryContext = [self newTemporaryContext];
-    NSLog(@">>>%d", [self countRecordWithContext:temporaryContext entitiyName:@"Tweet"]);
+    NSManagedObjectContext *tempContext = [self newTemporaryContext];
+
     __weak typeof(self) wself = self;
-    [temporaryContext performBlock:^{
+    [tempContext performBlock:^{
         if (configure) {
-            configure(temporaryContext);
+            configure(tempContext);
         } else {
             NSLog(@"Error: asyncWrite; setting == nil");
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -98,9 +100,11 @@
         }
         
         // コンテキストが変更されていたらを保存
-        if (temporaryContext.hasChanges) {
+        if (tempContext.hasChanges) {
             // 最終的にprivateWriterContextの-save:によりsqliteへ保存される
-            [wself saveWithTemporaryContext:temporaryContext];
+            [wself saveWithTemporaryContext:tempContext
+                        didMergeMainContext:success
+                              didSaveSQLite:nil];
         }
     }];
 }
@@ -109,15 +113,15 @@
                                     success:(YSCoreDataAysncFetchSuccess)success
                                     failure:(YSCoreDataFailure)failure
 {
-    NSManagedObjectContext *temporaryContext = [self newTemporaryContext];    
+    NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
     __weak typeof(self) wself = self;
-    [temporaryContext performBlock:^{
+    [tempContext performBlock:^{
         NSFetchRequest *request;
         if (configure) {
-            request = configure(temporaryContext);
+            request = configure(tempContext);
         } else {
-            NSLog(@"Error: asyncFetch; setting == nil");
+            NSLog(@"Error: asyncFetch; configure == nil");
             dispatch_async(dispatch_get_main_queue(), ^{
                 failure(nil);
             });
@@ -133,7 +137,7 @@
         }
         
         NSError *error = nil;
-        NSArray *fetchResults = [temporaryContext executeFetchRequest:request error:&error];
+        NSArray *fetchResults = [tempContext executeFetchRequest:request error:&error];
         
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -175,11 +179,6 @@
 
 #pragma mark - Save
 
-- (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
-{
-    [self saveWithTemporaryContext:temporaryContext didMergeMainContext:nil didSaveSQLite:nil];
-}
-
 - (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext didMergeMainContext:(void(^)(void))didMergeMainContext didSaveSQLite:(void(^)(void))didSaveSQLite
 {
     /*
@@ -198,12 +197,14 @@
         NSError *error = nil;
         if (![wself.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
             NSLog(@"Error: mainContext save; error = %@;", error);
+            return ;
         }
         LOG_YSCOREDATA(@"Did save mainContext");
         [wself.privateWriterContext performBlock:^{
             NSError *error = nil;
-            if (![wself.privateWriterContext save:&error]) { // sqliteへ保存
+            if (![wself.privateWriterContext save:&error]) { // SQLiteへ保存
                 NSLog(@"Error: privateWriterContext save; error = %@;", error);
+                return ;
             }
             LOG_YSCOREDATA(@"Did save privateWriterContext");
             if (didSaveSQLite) {

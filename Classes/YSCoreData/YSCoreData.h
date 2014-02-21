@@ -24,6 +24,7 @@ typedef void(^YSCoreDataFailure)(NSError *error);
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
+                                     success:(void(^)(void))success
                                    failure:(YSCoreDataFailure)failure;
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
