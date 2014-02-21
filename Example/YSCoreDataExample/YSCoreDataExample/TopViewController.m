@@ -26,7 +26,7 @@
     [ts removeRecordWithEntitiyName:@"User" success:^{
         NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
         NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
-    } failure:^(NSError *error) {
+    } failure:^(NSManagedObjectContext *context, NSError *error) {
         NSLog(@"error %@", error);
     }];
 }
