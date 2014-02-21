@@ -72,9 +72,9 @@
                     </tableView>
                     <toolbarItems>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="3SS-rt-A7Q"/>
-                        <barButtonItem title="Remove database" id="M9d-R1-uYq">
+                        <barButtonItem title="Delete database" id="M9d-R1-uYq">
                             <connections>
-                                <action selector="removeDatabaseButtonDidPush:" destination="qx3-9X-N4G" id="PBy-gJ-ja7"/>
+                                <action selector="deleteDatabaseButtonDidPush:" destination="qx3-9X-N4G" id="Y4o-nS-neX"/>
                             </connections>
                         </barButtonItem>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="WTl-9k-IMs"/>

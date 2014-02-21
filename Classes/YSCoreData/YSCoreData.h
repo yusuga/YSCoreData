@@ -10,11 +10,11 @@
 @import CoreData;
 
 typedef void(^YSCoreDataAysncWriteConfigure)(NSManagedObjectContext *context);
-typedef void(^YSCoreDataAysncWriteFailure)(NSError *error);
 
 typedef NSFetchRequest*(^YSCoreDataAysncFetchConfigure)(NSManagedObjectContext *context);
 typedef void(^YSCoreDataAysncFetchSuccess)(NSArray *fetchResults);
-typedef void(^YSCoreDataAysncFetchFailure)(NSError *error);
+
+typedef void(^YSCoreDataFailure)(NSError *error);
 
 @interface YSCoreData : NSObject
 
@@ -24,14 +24,17 @@ typedef void(^YSCoreDataAysncFetchFailure)(NSError *error);
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
-                                   failure:(YSCoreDataAysncWriteFailure)failure;
+                                   failure:(YSCoreDataFailure)failure;
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
                                   success:(YSCoreDataAysncFetchSuccess)success
-                                  failure:(YSCoreDataAysncFetchFailure)failure;
-
-- (BOOL)deleteDatabase;
+                                  failure:(YSCoreDataFailure)failure;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
+- (void)removeRecordWithEntitiyName:(NSString *)entityName
+                            success:(void(^)(void))success
+                            failure:(YSCoreDataFailure)failure;
+
+- (BOOL)deleteDatabase;
 
 @end

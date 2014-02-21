@@ -16,9 +16,24 @@
 
 @implementation TopViewController
 
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    TwitterStorage *ts = [TwitterStorage sharedInstance];
+    NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
+    NSLog(@"count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+    [ts removeRecordWithEntitiyName:@"User" success:^{
+        NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
+        NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+    } failure:^(NSError *error) {
+        NSLog(@"error %@", error);
+    }];
+}
+
 #pragma mark - Button action
 
-- (IBAction)removeDatabaseButtonDidPush:(id)sender
+- (IBAction)deleteDatabaseButtonDidPush:(id)sender
 {
     [[TwitterStorage sharedInstance] deleteDatabase];
     [TwitterRequest resetState];

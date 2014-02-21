@@ -17,16 +17,19 @@
         return;
     }
     /*
-        一つのコンテキストで一気にinsertした方が良いのですが、簡易にUserの重複を防ぐために一つづつ処理しています
-        一度にinsertする場合は以下。
+     簡易的なNSArrayでのInsert処理
      
-        [self asyncWriteWithManagedObjectSetting:^(NSManagedObjectContext *context) {
-            for (NSDictionary *twJson in tweetJsons) {
-                // temporaryContextにinsertする処理
-            }
-        } failure:^(NSError *error) {
+     この処理はUserIDが重複する場合があります。(Twitterなので本来はUserの重複を防いで保存したい)
+     重複される理由はtemporaryContextを元にUserの重複を確認しているからです。newTemporaryContextは作成した段階でのmainContenxtが
+     保持しているNSManagedObjectを参照できます。ですので、下記の方法だと同一のUserが含まれるNSArrayだとその分が重複されます。
      
-        }];     
+     Serial Dispatch Queueで防げそうなのですが、
+     ・newTemporaryContextの生成で別スレッドからmainContextにアクセスすることになる(mainContextをlockすればいいと思います)
+     ・temporaryContextのsave(mainContextへのマージ)が終わるまで次のnewTemporaryContextを生成しない
+     の2つが必要になります。
+     その場合、mainContextへのマージでコストがかかり保存時間が長くなります。
+     
+     以上のことから、重複チェックはNSArrayから重複チェックをしinsert or updateをした方がよさそうです。
      */
     for (NSDictionary *twJson in tweetJsons) {
         [self insertTweetWithTweetJson:twJson];

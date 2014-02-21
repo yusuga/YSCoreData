@@ -68,6 +68,11 @@
 
 - (NSManagedObjectContext *)newTemporaryContext
 {
+    /*
+     新しいtemporaryContext
+     parentContextにmainContextを指定することによって、temporaryContextはこの時点でmainContextが保持しているNSManagedObjectを
+     参照することができる
+     */
     LOG_YSCOREDATA(@"%s", __func__);
     NSManagedObjectContext *temporaryContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     temporaryContext.parentContext = self.mainContext;
@@ -76,10 +81,10 @@
 
 #pragma mark - Async
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure failure:(YSCoreDataAysncWriteFailure)failure
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure failure:(YSCoreDataFailure)failure
 {
     NSManagedObjectContext *temporaryContext = [self newTemporaryContext];
-    
+    NSLog(@">>>%d", [self countRecordWithContext:temporaryContext entitiyName:@"Tweet"]);
     __weak typeof(self) wself = self;
     [temporaryContext performBlock:^{
         if (configure) {
@@ -102,9 +107,9 @@
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
                                     success:(YSCoreDataAysncFetchSuccess)success
-                                    failure:(YSCoreDataAysncFetchFailure)failure
+                                    failure:(YSCoreDataFailure)failure
 {
-    NSManagedObjectContext *temporaryContext = [self newTemporaryContext];
+    NSManagedObjectContext *temporaryContext = [self newTemporaryContext];    
     
     __weak typeof(self) wself = self;
     [temporaryContext performBlock:^{
@@ -147,6 +152,7 @@
         /*
          FetchしたNSManagedObjectを別スレッドに渡せない(temporaryContextと共に解放される)ので
          スレッドセーフなNSManagedObjectIDを保持する
+         ※ 正確に言うと、NSManagedObject自体は解放されてないんだけどpropertyが解放されている
          */
         NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[fetchResults count]];
         for (NSManagedObject *obj in fetchResults) {
@@ -171,10 +177,15 @@
 
 - (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
 {
+    [self saveWithTemporaryContext:temporaryContext didMergeMainContext:nil didSaveSQLite:nil];
+}
+
+- (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext didMergeMainContext:(void(^)(void))didMergeMainContext didSaveSQLite:(void(^)(void))didSaveSQLite
+{
     /*
-     temporaryContextのqueueから呼び出されることを前提としている
+     temporaryContextの-performBlock:から呼び出されることを前提としている
      */
-    
+
     __weak typeof(self) wself = self;
     NSError *error = nil;
     LOG_YSCOREDATA(@"Will save temporaryContext");
@@ -183,6 +194,7 @@
     }
     LOG_YSCOREDATA(@"Did save temporaryContext");
     [wself.mainContext performBlock:^{
+        if (didMergeMainContext) didMergeMainContext();
         NSError *error = nil;
         if (![wself.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
             NSLog(@"Error: mainContext save; error = %@;", error);
@@ -194,20 +206,59 @@
                 NSLog(@"Error: privateWriterContext save; error = %@;", error);
             }
             LOG_YSCOREDATA(@"Did save privateWriterContext");
+            if (didSaveSQLite) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    didSaveSQLite();
+                });
+            }
         }];
     }];
 }
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName
 {
-    NSFetchRequest* request = [[NSFetchRequest alloc] init];
-    [request setEntity:[NSEntityDescription entityForName:entityName
-                                   inManagedObjectContext:self.mainContext]];
-    [request setIncludesSubentities:NO];
+    return [self countRecordWithContext:self.mainContext entitiyName:entityName];
+}
+
+- (NSUInteger)countRecordWithContext:(NSManagedObjectContext*)context entitiyName:(NSString*)entityName
+{
+    NSFetchRequest* req = [[NSFetchRequest alloc] init];
+    [req setEntity:[NSEntityDescription entityForName:entityName
+                               inManagedObjectContext:context]];
+    [req setIncludesSubentities:NO];
     
     NSError* error = nil;
-    NSUInteger count = [self.mainContext countForFetchRequest:request error:&error];
+    NSUInteger count = [context countForFetchRequest:req error:&error];
     return count == NSNotFound ? 0 : count;
+}
+
+- (void)removeRecordWithEntitiyName:(NSString *)entityName
+                            success:(void(^)(void))success
+                            failure:(YSCoreDataFailure)failure
+{
+    NSManagedObjectContext *tempContext = [self newTemporaryContext];
+    
+    __weak typeof(self) wself = self;
+    [tempContext performBlock:^{
+        NSFetchRequest* req = [[NSFetchRequest alloc] init];
+        [req setEntity:[NSEntityDescription entityForName:entityName
+                                   inManagedObjectContext:tempContext]];
+        NSError* error = nil;
+        NSArray *results = [tempContext executeFetchRequest:req error:&error];
+        if (error) {
+            NSLog(@"Error: execure; error = %@;", error);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (failure) failure(error);
+            });
+            return;
+        }
+        for (NSManagedObject *manaObj in results) {
+            [tempContext deleteObject:manaObj];
+        }
+        [wself saveWithTemporaryContext:tempContext didMergeMainContext:^{
+            if (success) success();
+        } didSaveSQLite:nil];
+    }];
 }
 
 #pragma mark - Property
