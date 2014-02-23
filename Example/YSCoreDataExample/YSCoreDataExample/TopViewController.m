@@ -19,6 +19,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
     
     TwitterStorage *ts = [TwitterStorage sharedInstance];
     NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));

@@ -17,12 +17,12 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 
 + (instancetype)sharedInstance;
 
-- (void)insertTweetsWithTweetJsons:(NSArray*)tweetJsons;
-- (void)insertTweetWithTweetJson:(NSDictionary*)tweetJson;
+- (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson;
+- (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons;
 
-- (void)fetchTweetsLimit:(NSUInteger)limit
-                   maxId:(NSNumber *)maxId
-                 success:(TwitterStorageFetchTweetsSuccess)success
-                 failure:(TwitterStorageFetchTweetsFailure)failure;
+- (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
+                                   maxId:(NSNumber *)maxId
+                                 success:(TwitterStorageFetchTweetsSuccess)success
+                                 failure:(TwitterStorageFetchTweetsFailure)failure;
 
 @end

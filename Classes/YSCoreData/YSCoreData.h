@@ -8,14 +8,7 @@
 
 #import <Foundation/Foundation.h>
 @import CoreData;
-
-typedef void(^YSCoreDataAysncWriteConfigure)(NSManagedObjectContext *context);
-
-typedef NSFetchRequest*(^YSCoreDataAysncFetchConfigure)(NSManagedObjectContext *context);
-typedef void(^YSCoreDataAysncFetchSuccess)(NSArray *fetchResults);
-
-typedef void(^YSCoreDataFailure)(NSError *error);
-typedef void(^YSCoreDataSaveFailure)(NSManagedObjectContext *context, NSError *error);
+#import "YSCoreDataOperation.h"
 
 typedef enum {
     YSCoreDataDirectoryTypeDocument,
@@ -30,18 +23,18 @@ typedef enum {
 
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
-                                     success:(void(^)(void))success
-                                     failure:(YSCoreDataSaveFailure)failure;
+- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAysncWriteConfigure)configure
+                                                     success:(void(^)(void))success
+                                                     failure:(YSCoreDataOperationSaveFailure)failure;
 
-- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
-                                    success:(YSCoreDataAysncFetchSuccess)success
-                                    failure:(YSCoreDataFailure)failure;
+- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAysncFetchConfigure)configure
+                                    success:(YSCoreDataOperationAysncFetchSuccess)success
+                                    failure:(YSCoreDataOperationFailure)failure;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 - (void)removeRecordWithEntitiyName:(NSString *)entityName
                             success:(void(^)(void))success
-                            failure:(YSCoreDataSaveFailure)failure;
+                            failure:(YSCoreDataOperationSaveFailure)failure;
 
 - (BOOL)deleteDatabase;
 

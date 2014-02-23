@@ -9,6 +9,12 @@
 #import "DetailViewController.h"
 #import "TwitterRequest.h"
 
+@interface DetailViewController ()
+
+@property (nonatomic) YSCoreDataOperation *insertOperation;
+
+@end
+
 @implementation DetailViewController
 
 - (void)viewDidLoad
@@ -18,6 +24,13 @@
     [self.tableView registerNib:[TweetCell nib] forCellReuseIdentifier:@"Cell"];
     
     self.getTweetLimit = 5;
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    [self.insertOperation cancel];
 }
 
 #pragma mark - Table view data source
@@ -50,9 +63,11 @@
 
 - (IBAction)insertTweetsButtonDidPush:(id)sender
 {
+    __weak typeof(self) wself = self;
     [TwitterRequest requestTweetsWithLimit:self.getTweetLimit completion:^(NSArray *newTweets) {
         // 取得したツイートをCoreDataに保存
-        [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets];
+        wself.insertOperation = [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets];
+//        [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets];
     }];
 }
 

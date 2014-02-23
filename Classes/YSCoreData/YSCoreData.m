@@ -9,16 +9,6 @@
 #import "YSCoreData.h"
 #import <YSFileManager/YSFileManager.h>
 
-#if DEBUG
-    #if 0
-        #define LOG_YSCOREDATA(...) NSLog(__VA_ARGS__)
-    #endif
-#endif
-
-#ifndef LOG_YSCOREDATA
-    #define LOG_YSCOREDATA(...)
-#endif
-
 @interface YSCoreData ()
 
 @property (nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
@@ -99,7 +89,7 @@
      parentContextにmainContextを指定することによって、temporaryContextはこの時点でmainContextが保持しているNSManagedObjectを
      参照することができる
      */
-    LOG_YSCOREDATA(@"%s", __func__);
+    LOG_YSCORE_DATA(@"%s", __func__);
     NSManagedObjectContext *temporaryContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     temporaryContext.parentContext = self.mainContext;
     return temporaryContext;
@@ -107,104 +97,50 @@
 
 #pragma mark - Async
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
-                                     success:(void (^)(void))success
-                                     failure:(YSCoreDataSaveFailure)failure
+- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAysncWriteConfigure)configure
+                                                     success:(void (^)(void))success
+                                                     failure:(YSCoreDataOperationSaveFailure)failure
 {
-    NSManagedObjectContext *tempContext = [self newTemporaryContext];
-
-    __weak typeof(self) wself = self;
-    [tempContext performBlock:^{
-        if (configure) {
-            configure(tempContext);
-        } else {
-            NSLog(@"Error: asyncWrite; setting == nil");
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (failure) failure(tempContext, nil);
-            });
-            return ;
-        }
-        
-        // コンテキストが変更されていたらを保存
-        if (tempContext.hasChanges) {
-            // 最終的にprivateWriterContextの-save:によりsqliteへ保存される
-            [wself saveWithTemporaryContext:tempContext
-                        didMergeMainContext:success
-                              didSaveSQLite:nil failure:failure];
-        } else {
-            LOG_YSCOREDATA(@"tempContext.hasChanges == NO");
-            if (success) success();
-        }
-    }];
-}
-
-- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
-                                    success:(YSCoreDataAysncFetchSuccess)success
-                                    failure:(YSCoreDataFailure)failure
-{
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
     __weak typeof(self) wself = self;
-    [tempContext performBlock:^{
-        NSFetchRequest *request;
-        if (configure) {
-            request = configure(tempContext);
-        } else {
-            NSLog(@"Error: asyncFetch; configure == nil");
-            dispatch_async(dispatch_get_main_queue(), ^{
-                failure(nil);
-            });
-            return ;
-        }
-        
-        if (request == nil) {
-            NSLog(@"Error: asyncFetch; request == nil");
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (failure) failure(nil);
-            });
-            return ;
-        }
-        
-        NSError *error = nil;
-        NSArray *fetchResults = [tempContext executeFetchRequest:request error:&error];
-        
-        if (error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (failure) failure(error);
-            });
-            return;
-        }
-        
-        if ([fetchResults count] == 0) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (success) success(fetchResults);
-            });
-            return;
-        }
-        
-        /*
-         FetchしたNSManagedObjectを別スレッドに渡せない(temporaryContextと共に解放される)ので
-         スレッドセーフなNSManagedObjectIDを保持する
-         ※ 正確に言うと、NSManagedObject自体は解放されてないんだけどpropertyが解放されている
-         */
-        NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[fetchResults count]];
-        for (NSManagedObject *obj in fetchResults) {
-            [ids addObject:obj.objectID];
-        }
-        
-        [wself.mainContext performBlock:^{ // == dispatch_async(dispatch_get_main_queue(), ^{
-            /*
-             mainContext(NSMainQueueConcurrencyTypeで初期化したContext)から
-             保持していたNSManagedObjectIDを元にNSManagedObjectを取得
-             */
-            NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
-            for (NSManagedObjectID *objId in ids) {
-                [fetchResults addObject:[wself.mainContext objectWithID:objId]];
-            }
-            LOG_YSCOREDATA(@"Success: Fetch %@", @([fetchResults count]));
-            if (success) success(fetchResults);
-        }];
-    }];
+    [ope asyncWriteWithBackgroundContext:tempContext
+                  configureManagedObject:configure
+                  successInContextThread:^{
+                      // コンテキストが変更されていたらを保存
+                      if (tempContext.hasChanges) {
+                          // 最終的にprivateWriterContextの-save:によりsqliteへ保存される
+                          [wself saveWithTemporaryContext:tempContext
+                                      didMergeMainContext:success
+                                            didSaveSQLite:nil
+                                                  failure:failure];
+                      } else {
+                          LOG_YSCORE_DATA(@"tempContext.hasChanges == NO");
+                          dispatch_async(dispatch_get_main_queue(), ^{
+                              if (success) success();
+                          });
+                      }
+                  } failure:^(NSManagedObjectContext *context, NSError *error) {
+                      if (failure) failure(context, error);
+                  }];
+    return ope;
+}
+
+- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAysncFetchConfigure)configure
+                                                    success:(YSCoreDataOperationAysncFetchSuccess)success
+                                                    failure:(YSCoreDataOperationFailure)failure
+{
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
+    NSManagedObjectContext *tempContext = [self newTemporaryContext];
+    
+    [ope asyncFetchWithBackgroundContext:tempContext
+                             mainContext:self.mainContext
+                   configureFetchRequest:configure
+                  successInContextThread:success
+                                 failure:failure];
+    
+    return ope;    
 }
 
 #pragma mark - Save
@@ -212,7 +148,7 @@
 - (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
              didMergeMainContext:(void(^)(void))didMergeMainContext
                    didSaveSQLite:(void(^)(void))didSaveSQLite
-                         failure:(YSCoreDataSaveFailure)failure
+                         failure:(YSCoreDataOperationSaveFailure)failure
 {
     /*
      temporaryContextの-performBlock:から呼び出されることを前提としている
@@ -220,7 +156,7 @@
 
     __weak typeof(self) wself = self;
     NSError *error = nil;
-    LOG_YSCOREDATA(@"Will save temporaryContext");
+    LOG_YSCORE_DATA(@"Will save temporaryContext");
     if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
         NSLog(@"Error: temporaryContext save; error = %@;", error);
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -228,7 +164,7 @@
         });
         return;
     }
-    LOG_YSCOREDATA(@"Did save temporaryContext");
+    LOG_YSCORE_DATA(@"Did save temporaryContext");
     [wself.mainContext performBlock:^{
         if (didMergeMainContext) didMergeMainContext();
         NSError *error = nil;
@@ -237,7 +173,7 @@
             if (failure) failure(wself.mainContext, nil);
             return ;
         }
-        LOG_YSCOREDATA(@"Did save mainContext");
+        LOG_YSCORE_DATA(@"Did save mainContext");
         [wself.privateWriterContext performBlock:^{
             NSError *error = nil;
             if (![wself.privateWriterContext save:&error]) { // SQLiteへ保存
@@ -247,7 +183,7 @@
                 });
                 return ;
             }
-            LOG_YSCOREDATA(@"Did save privateWriterContext");
+            LOG_YSCORE_DATA(@"Did save privateWriterContext");
             if (didSaveSQLite) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     didSaveSQLite();
@@ -276,7 +212,7 @@
 
 - (void)removeRecordWithEntitiyName:(NSString *)entityName
                             success:(void(^)(void))success
-                            failure:(YSCoreDataSaveFailure)failure
+                            failure:(YSCoreDataOperationSaveFailure)failure
 {
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
@@ -308,7 +244,7 @@
 - (NSPersistentStoreCoordinator *)persistentStoreCoordinator
 {
     if (_persistentStoreCoordinator == nil) {
-        LOG_YSCOREDATA(@"Init %s", __func__);
+        LOG_YSCORE_DATA(@"Init %s", __func__);
         NSURL *storeUrl = [NSURL fileURLWithPath:[self databaseFullPath]];
         NSError *error = nil;
         _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:self.managedObjectModel];
@@ -326,7 +262,7 @@
 - (NSManagedObjectModel *)managedObjectModel
 {
     if (_managedObjectModel == nil) {
-        LOG_YSCOREDATA(@"Init %s", __func__);
+        LOG_YSCORE_DATA(@"Init %s", __func__);
         _managedObjectModel = [NSManagedObjectModel mergedModelFromBundles:nil];
     }
     return _managedObjectModel;
@@ -335,7 +271,7 @@
 - (NSManagedObjectContext *)privateWriterContext
 {
     if (_privateWriterContext == nil) {
-        LOG_YSCOREDATA(@"Init %s", __func__);
+        LOG_YSCORE_DATA(@"Init %s", __func__);
         _privateWriterContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
         _privateWriterContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
     }
@@ -345,7 +281,7 @@
 - (NSManagedObjectContext *)mainContext
 {
     if (_mainContext == nil) {
-        LOG_YSCOREDATA(@"Init %s", __func__);
+        LOG_YSCORE_DATA(@"Init %s", __func__);
         _mainContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         _mainContext.parentContext = self.privateWriterContext;
     }

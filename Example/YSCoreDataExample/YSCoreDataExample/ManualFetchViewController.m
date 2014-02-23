@@ -11,6 +11,7 @@
 @interface ManualFetchViewController ()
 
 @property (nonatomic) NSMutableArray *tweets;
+@property (nonatomic) YSCoreDataOperation *fetchOperation;
 
 @end
 
@@ -21,6 +22,13 @@
     [super viewDidLoad];
     
     self.tweets = [NSMutableArray array];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    [self.fetchOperation cancel];
 }
 
 #pragma mark - Table view data source
@@ -41,11 +49,12 @@
 #pragma mark - Button action
 
 - (IBAction)fetchButtonDidPush:(id)sender
-{
+{    
     // CoreDataからツイートを取得
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
-    [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
+    self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
+//    [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
         NSUInteger tweetsCount = [tweets count];
         NSLog(@"fetch tweets %d", tweetsCount);
         if (tweetsCount == 0) {
