@@ -71,13 +71,17 @@
                         </connections>
                     </tableView>
                     <toolbarItems>
-                        <barButtonItem style="plain" systemItem="flexibleSpace" id="3SS-rt-A7Q"/>
+                        <barButtonItem title="Remove tweet" id="KFI-GD-xzG">
+                            <connections>
+                                <action selector="removeTweetButtonDidPush:" destination="qx3-9X-N4G" id="Mrc-DP-M39"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem style="plain" systemItem="flexibleSpace" id="WTl-9k-IMs"/>
                         <barButtonItem title="Delete database" id="M9d-R1-uYq">
                             <connections>
                                 <action selector="deleteDatabaseButtonDidPush:" destination="qx3-9X-N4G" id="Y4o-nS-neX"/>
                             </connections>
                         </barButtonItem>
-                        <barButtonItem style="plain" systemItem="flexibleSpace" id="WTl-9k-IMs"/>
                     </toolbarItems>
                     <navigationItem key="navigationItem" title="YSCoreDataExample" id="44a-Yc-sYV"/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>

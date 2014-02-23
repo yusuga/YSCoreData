@@ -19,19 +19,25 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
-//    TwitterStorage *ts = [TwitterStorage sharedInstance];
-//    NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
-//    NSLog(@"count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
-//    [ts removeRecordWithEntitiyName:@"Tweet" success:^{
-//        NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
-//        NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
-//    } failure:^(NSManagedObjectContext *context, NSError *error) {
-//        NSLog(@"error %@", error);
-//    }];
+    
+    TwitterStorage *ts = [TwitterStorage sharedInstance];
+    NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
+    NSLog(@"count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
 }
 
 #pragma mark - Button action
+
+- (IBAction)removeTweetButtonDidPush:(id)sender
+{
+    NSLog(@"%s", __func__);
+    TwitterStorage *ts = [TwitterStorage sharedInstance];
+    [ts removeRecordWithEntitiyName:@"Tweet" success:^{
+        NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
+        NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+    } failure:^(NSManagedObjectContext *context, NSError *error) {
+        NSLog(@"error %@", error);
+    }];
+}
 
 - (IBAction)deleteDatabaseButtonDidPush:(id)sender
 {
