@@ -7,15 +7,11 @@
 //
 
 #import "AppDelegate.h"
-#import "TwitterStorage.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    // データベース名を設定
-    [[TwitterStorage sharedInstance] setupWithDatabaseName:@"Twitter.db"];
-
     return YES;
 }
 							

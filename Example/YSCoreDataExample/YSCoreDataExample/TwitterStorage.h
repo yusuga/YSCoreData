@@ -15,6 +15,8 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 
 @interface TwitterStorage : YSCoreData
 
++ (instancetype)sharedInstance;
+
 - (void)insertTweetsWithTweetJsons:(NSArray*)tweetJsons;
 - (void)insertTweetWithTweetJson:(NSDictionary*)tweetJson;
 

@@ -10,6 +10,17 @@
 
 @implementation TwitterStorage
 
++ (instancetype)sharedInstance
+{
+    static id s_sharedInstance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        s_sharedInstance =  [[self alloc] initWithDirectoryType:YSCoreDataDirectoryTypeDocument
+                                                   databasePath:@"Twitter.db"];
+    });
+    return s_sharedInstance;
+}
+
 - (void)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
 {
     if (![tweetJsons isKindOfClass:[NSArray class]]) {

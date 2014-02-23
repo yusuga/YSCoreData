@@ -25,38 +25,64 @@
 @property (nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (nonatomic) NSManagedObjectContext *privateWriterContext;
 
-@property (nonatomic) NSString *databaseName;
+@property (nonatomic) YSCoreDataDirectoryType directoryType;
+@property (nonatomic) NSString *databasePath;
+@property (nonatomic) NSString *databaseFullPath;
 
 @end
 
+
 @implementation YSCoreData
 @synthesize mainContext = _mainContext;
+@synthesize databaseFullPath = _databaseFullPath;
 
-+ (instancetype)sharedInstance
+- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType databasePath:(NSString *)databasePath
 {
-    static id s_sharedInstance;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        s_sharedInstance =  [[self alloc] init];
-    });
-    return s_sharedInstance;
+    if (self = [super init]) {
+        self.directoryType = directoryType;
+        self.databasePath = databasePath;
+        [self privateWriterContext]; // setup
+    }
+    return self;
 }
 
-- (void)setupWithDatabaseName:(NSString*)dbName
+- (NSString*)databaseFullPath
 {
-    self.databaseName = dbName;
-    [self privateWriterContext]; // setup
-}
-
-- (NSString*)databasePath
-{
-    return [YSFileManager documentDirectoryWithAppendingPathComponent:self.databaseName];
+    if (_databaseFullPath == nil) {
+        NSString *basePath;
+        switch (self.directoryType) {
+            case YSCoreDataDirectoryTypeDocument:
+                basePath = [YSFileManager documentDirectory];
+                break;
+            case YSCoreDataDirectoryTypeTemporary:
+                basePath = [YSFileManager temporaryDirectory];
+                break;
+            case YSCoreDataDirectoryTypeCaches:
+                basePath = [YSFileManager cachesDirectory];
+                break;
+            default:
+                basePath = [YSFileManager documentDirectory];
+                NSAssert2(0, @"Unexpected error: %s; Unknown directoryType = %@;", __func__, @(self.directoryType));
+                break;
+        }
+        NSString *databasePath = self.databasePath;
+        if (databasePath == nil || databasePath.length == 0) {
+            databasePath = @"Database.db";
+        }
+        NSArray *pathComponents = [databasePath pathComponents];
+        if ([pathComponents count] > 1) {
+            // ディレクトリの作成
+            [YSFileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:[databasePath stringByDeletingLastPathComponent]]];
+        }
+        _databaseFullPath = [basePath stringByAppendingPathComponent:databasePath];
+    }
+    return _databaseFullPath;
 }
 
 - (BOOL)deleteDatabase
 {
     NSLog(@"%s", __func__);
-    NSString *path = [self databasePath];
+    NSString *path = [self databaseFullPath];
     BOOL ret = [YSFileManager removeAtPath:path];
     [YSFileManager removeAtPath:[path stringByAppendingString:@"-shm"]];
     [YSFileManager removeAtPath:[path stringByAppendingString:@"-wal"]];
@@ -283,14 +309,15 @@
 {
     if (_persistentStoreCoordinator == nil) {
         LOG_YSCOREDATA(@"Init %s", __func__);
-        NSURL *storeUrl = [NSURL fileURLWithPath:[self databasePath]];
+        NSURL *storeUrl = [NSURL fileURLWithPath:[self databaseFullPath]];
         NSError *error = nil;
         _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:self.managedObjectModel];
         if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeUrl options:nil error:&error]) {
             NSLog(@"Error: %s; error = %@;", __func__, error);
+            NSAssert2(0, @"Unexpected error: %s; error = %@;", __func__, error);
         }
 #if DEBUG
-        NSLog(@"Database path = %@", [self databasePath]);
+        NSLog(@"Database path = %@", [self databaseFullPath]);
 #endif
     }
     return _persistentStoreCoordinator;
@@ -323,14 +350,6 @@
         _mainContext.parentContext = self.privateWriterContext;
     }
     return _mainContext;
-}
-
-- (NSString *)databaseName
-{
-    if (_databaseName) {
-        return _databaseName;
-    }
-    return @"Database.db";
 }
 
 @end

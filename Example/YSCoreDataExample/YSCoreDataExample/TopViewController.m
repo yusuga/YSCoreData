@@ -19,16 +19,16 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
-    TwitterStorage *ts = [TwitterStorage sharedInstance];
-    NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
-    NSLog(@"count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
-    [ts removeRecordWithEntitiyName:@"User" success:^{
-        NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
-        NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
-    } failure:^(NSManagedObjectContext *context, NSError *error) {
-        NSLog(@"error %@", error);
-    }];
+
+//    TwitterStorage *ts = [TwitterStorage sharedInstance];
+//    NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
+//    NSLog(@"count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+//    [ts removeRecordWithEntitiyName:@"Tweet" success:^{
+//        NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
+//        NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+//    } failure:^(NSManagedObjectContext *context, NSError *error) {
+//        NSLog(@"error %@", error);
+//    }];
 }
 
 #pragma mark - Button action

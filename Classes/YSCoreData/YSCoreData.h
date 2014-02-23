@@ -17,20 +17,26 @@ typedef void(^YSCoreDataAysncFetchSuccess)(NSArray *fetchResults);
 typedef void(^YSCoreDataFailure)(NSError *error);
 typedef void(^YSCoreDataSaveFailure)(NSManagedObjectContext *context, NSError *error);
 
+typedef enum {
+    YSCoreDataDirectoryTypeDocument,
+    YSCoreDataDirectoryTypeTemporary,
+    YSCoreDataDirectoryTypeCaches,
+} YSCoreDataDirectoryType;
+
 @interface YSCoreData : NSObject
 
-+ (instancetype)sharedInstance;
-- (void)setupWithDatabaseName:(NSString*)dbName;
+- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
+                         databasePath:(NSString *)databasePath;
 
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataAysncWriteConfigure)configure
                                      success:(void(^)(void))success
-                                   failure:(YSCoreDataSaveFailure)failure;
+                                     failure:(YSCoreDataSaveFailure)failure;
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataAysncFetchConfigure)configure
-                                  success:(YSCoreDataAysncFetchSuccess)success
-                                  failure:(YSCoreDataFailure)failure;
+                                    success:(YSCoreDataAysncFetchSuccess)success
+                                    failure:(YSCoreDataFailure)failure;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 - (void)removeRecordWithEntitiyName:(NSString *)entityName
