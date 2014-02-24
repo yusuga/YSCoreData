@@ -16,7 +16,7 @@
 
 - (void)asyncWriteWithBackgroundContext:(NSManagedObjectContext*)bgContext
                  configureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                 successInContextThread:(void (^)(void))success
+                 successInContextThread:(YSCoreDataOperationSuccess)success
                                 failure:(YSCoreDataOperationSaveFailure)failure
 {
     NSAssert(bgContext != nil, @"context is nil;");
@@ -40,14 +40,14 @@
             return ;
         }
         
-        if (success) success();
+        if (success) success(bgContext);
     }];
 }
 
 - (void)asyncFetchWithBackgroundContext:(NSManagedObjectContext*)bgContext
                             mainContext:(NSManagedObjectContext*)mainContext
                   configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                 successInContextThread:(YSCoreDataOperationAsyncFetchSuccess)success
+                 success:(YSCoreDataOperationFetchSuccess)success
                                 failure:(YSCoreDataOperationFailure)failure
 {
     NSAssert(bgContext != nil && mainContext != nil, @"context is nil;");
@@ -60,6 +60,14 @@
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (failure) failure(error);
+            });
+            return;
+        }
+        
+        if ([results count] == 0) {
+            LOG_YSCORE_DATA(@"Fetch result is none");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (success) success(results);
             });
             return;
         }
@@ -91,7 +99,7 @@
 
 - (void)asyncRemoveRecordWithBackgroundContext:(NSManagedObjectContext *)bgContext
                          configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                        successInContextThread:(void (^)(void))success
+                        successInContextThread:(YSCoreDataOperationSuccess)success
                                        failure:(YSCoreDataOperationSaveFailure)failure
 {
     NSAssert(bgContext != nil, @"context is nil;");
@@ -108,9 +116,16 @@
             return;
         }
         
+        if ([results count] == 0) {
+            LOG_YSCORE_DATA(@"Fetch result is none");
+            if (success) success(bgContext);
+            return;
+        }
+        
         for (NSManagedObject *manaObj in results) {
             [bgContext deleteObject:manaObj];
         }
+        
         if (self.isCancelled) {
             LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -119,7 +134,7 @@
             return;
         }
         
-        if (success) success();
+        if (success) success(bgContext);
     }];
 }
 
@@ -154,12 +169,6 @@
     
     if ((error && *error)) {
         LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", *error);
-        return nil;
-    }
-    
-    if ([results count] == 0) {
-        LOG_YSCORE_DATA(@"Result is none");
-        *error = [YSCoreDataError resultIsNoneError];
         return nil;
     }
     

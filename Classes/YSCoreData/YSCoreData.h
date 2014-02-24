@@ -28,7 +28,7 @@ typedef enum {
                                                      failure:(YSCoreDataOperationSaveFailure)failure;
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                    success:(YSCoreDataOperationAsyncFetchSuccess)success
+                                    success:(YSCoreDataOperationFetchSuccess)success
                                     failure:(YSCoreDataOperationFailure)failure;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;

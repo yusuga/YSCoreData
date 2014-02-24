@@ -46,9 +46,4 @@ NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
     return [self errorWithCode:YSCoreDataErrorCodeRequiredArgumentIsNil description:description];
 }
 
-+ (NSError *)resultIsNoneError
-{
-    return [self errorWithCode:YSCoreDataErrorCodeResultIsNone description:@"Result is none"];
-}
-
 @end

@@ -14,7 +14,6 @@ typedef enum {
     YSCoreDataErrorCodeUnknown,
     YSCoreDataErrorCodeCancel,
     YSCoreDataErrorCodeRequiredArgumentIsNil,
-    YSCoreDataErrorCodeResultIsNone,
 } YSCoreDataErrorCode;
 
 typedef enum {
@@ -28,6 +27,5 @@ typedef enum {
 
 + (NSError*)cancelErrorWithOperationType:(YSCoreDataErrorOperationType)operationType;
 + (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description;
-+ (NSError*)resultIsNoneError;
 
 @end

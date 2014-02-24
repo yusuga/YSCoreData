@@ -107,20 +107,13 @@
     __weak typeof(self) wself = self;
     [ope asyncWriteWithBackgroundContext:tempContext
                   configureManagedObject:configure
-                  successInContextThread:^{
-                      // コンテキストが変更されていたらを保存
-                      if (tempContext.hasChanges) {
-                          // 最終的にprivateWriterContextの-save:によりsqliteへ保存される
-                          [wself saveWithTemporaryContext:tempContext
-                                      didMergeMainContext:success
-                                            didSaveSQLite:nil
-                                                  failure:failure];
-                      } else {
-                          LOG_YSCORE_DATA(@"tempContext.hasChanges == NO");
-                          dispatch_async(dispatch_get_main_queue(), ^{
-                              if (success) success();
-                          });
-                      }
+                  successInContextThread:^(NSManagedObjectContext *context){
+
+                      [wself saveWithTemporaryContext:context
+                                  didMergeMainContext:success
+                                        didSaveSQLite:nil
+                                              failure:failure];
+
                   } failure:^(NSManagedObjectContext *context, NSError *error) {
                       if (failure) failure(context, error);
                   }];
@@ -128,7 +121,7 @@
 }
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                                    success:(YSCoreDataOperationAsyncFetchSuccess)success
+                                                    success:(YSCoreDataOperationFetchSuccess)success
                                                     failure:(YSCoreDataOperationFailure)failure
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
@@ -137,10 +130,49 @@
     [ope asyncFetchWithBackgroundContext:tempContext
                              mainContext:self.mainContext
                    configureFetchRequest:configure
-                  successInContextThread:success
+                                 success:success
                                  failure:failure];
     
     return ope;    
+}
+
+- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName
+{
+    return [self countRecordWithContext:self.mainContext entitiyName:entityName];
+}
+
+- (NSUInteger)countRecordWithContext:(NSManagedObjectContext*)context entitiyName:(NSString*)entityName
+{
+    NSFetchRequest* req = [[NSFetchRequest alloc] init];
+    [req setEntity:[NSEntityDescription entityForName:entityName
+                               inManagedObjectContext:context]];
+    [req setIncludesSubentities:NO];
+    
+    NSError* error = nil;
+    NSUInteger count = [context countForFetchRequest:req error:&error];
+    return count == NSNotFound ? 0 : count;
+}
+
+- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                                           success:(void(^)(void))success
+                                                           failure:(YSCoreDataOperationSaveFailure)failure
+{
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
+    NSManagedObjectContext *tempContext = [self newTemporaryContext];
+    
+    __weak typeof(self) wself = self;
+    [ope asyncRemoveRecordWithBackgroundContext:tempContext
+                          configureFetchRequest:configure
+                         successInContextThread:^(NSManagedObjectContext *context){
+                             
+                             [wself saveWithTemporaryContext:tempContext
+                                         didMergeMainContext:success
+                                               didSaveSQLite:nil
+                                                     failure:failure];
+                             
+                         } failure:failure];
+    
+    return ope;
 }
 
 #pragma mark - Save
@@ -154,6 +186,15 @@
      temporaryContextの-performBlock:から呼び出されることを前提としている
      */
 
+    // コンテキストが変更されていなければ保存しない
+    if (!temporaryContext.hasChanges) {
+        LOG_YSCORE_DATA(@"temporaryContext.hasChanges == NO");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (didMergeMainContext) didMergeMainContext();
+        });
+        return;
+    }
+    
     __weak typeof(self) wself = self;
     NSError *error = nil;
     LOG_YSCORE_DATA(@"Will save temporaryContext");
@@ -191,45 +232,6 @@
             }
         }];
     }];
-}
-
-- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName
-{
-    return [self countRecordWithContext:self.mainContext entitiyName:entityName];
-}
-
-- (NSUInteger)countRecordWithContext:(NSManagedObjectContext*)context entitiyName:(NSString*)entityName
-{
-    NSFetchRequest* req = [[NSFetchRequest alloc] init];
-    [req setEntity:[NSEntityDescription entityForName:entityName
-                               inManagedObjectContext:context]];
-    [req setIncludesSubentities:NO];
-    
-    NSError* error = nil;
-    NSUInteger count = [context countForFetchRequest:req error:&error];
-    return count == NSNotFound ? 0 : count;
-}
-
-- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                           success:(void(^)(void))success
-                                           failure:(YSCoreDataOperationSaveFailure)failure
-{
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
-    NSManagedObjectContext *tempContext = [self newTemporaryContext];
-    
-    __weak typeof(self) wself = self;
-    [ope asyncRemoveRecordWithBackgroundContext:tempContext
-                          configureFetchRequest:configure
-                         successInContextThread:^{
-                             
-                             [wself saveWithTemporaryContext:tempContext
-                                         didMergeMainContext:success
-                                               didSaveSQLite:nil
-                                                     failure:failure];
-                             
-                         } failure:failure];
-    
-    return ope;
 }
 
 #pragma mark - Property

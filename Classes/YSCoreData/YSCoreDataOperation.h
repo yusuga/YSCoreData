@@ -11,7 +11,7 @@
 #import "YSCoreDataError.h"
 
 #if DEBUG
-    #if 0
+    #if 1
         #define LOG_YSCORE_DATA(...) NSLog(__VA_ARGS__)
     #endif
 #endif
@@ -28,7 +28,8 @@ typedef void(^YSCoreDataOperationAsyncWriteConfigure)(NSManagedObjectContext *co
 typedef NSFetchRequest*(^YSCoreDataOperationAsyncFetchRequestConfigure)(NSManagedObjectContext *context,
                                                                  YSCoreDataOperation *operation);
 
-typedef void(^YSCoreDataOperationAsyncFetchSuccess)(NSArray *fetchResults);
+typedef void(^YSCoreDataOperationSuccess)(NSManagedObjectContext *context);
+typedef void(^YSCoreDataOperationFetchSuccess)(NSArray *fetchResults);
 
 typedef void(^YSCoreDataOperationFailure)(NSError *error);
 typedef void(^YSCoreDataOperationSaveFailure)(NSManagedObjectContext *context, NSError *error);
@@ -38,18 +39,18 @@ typedef void(^YSCoreDataOperationSaveFailure)(NSManagedObjectContext *context, N
 
 - (void)asyncWriteWithBackgroundContext:(NSManagedObjectContext*)bgContext
                  configureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                 successInContextThread:(void (^)(void))success
+                 successInContextThread:(YSCoreDataOperationSuccess)success
                                 failure:(YSCoreDataOperationSaveFailure)failure;
 
 - (void)asyncFetchWithBackgroundContext:(NSManagedObjectContext*)bgContext
                             mainContext:(NSManagedObjectContext*)mainContext
                   configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                 successInContextThread:(YSCoreDataOperationAsyncFetchSuccess)success
+                 success:(YSCoreDataOperationFetchSuccess)success
                                 failure:(YSCoreDataOperationFailure)failure;
 
 - (void)asyncRemoveRecordWithBackgroundContext:(NSManagedObjectContext*)bgContext
                          configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                        successInContextThread:(void(^)(void))success
+                        successInContextThread:(YSCoreDataOperationSuccess)success
                                        failure:(YSCoreDataOperationSaveFailure)failure;
 
 - (void)cancel;
