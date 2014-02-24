@@ -156,7 +156,7 @@
     NSArray *results = [context executeFetchRequest:req error:error];
     
     if ((error && *error)) {
-        LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", __func__, *error);
+        LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", *error);
         return nil;
     }
     
