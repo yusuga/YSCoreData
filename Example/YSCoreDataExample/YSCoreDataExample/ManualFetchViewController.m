@@ -54,7 +54,6 @@
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
     self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
-//    [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
         NSUInteger tweetsCount = [tweets count];
         NSLog(@"fetch tweets %d", tweetsCount);
         if (tweetsCount == 0) {

@@ -67,7 +67,6 @@
     [TwitterRequest requestTweetsWithLimit:self.getTweetLimit completion:^(NSArray *newTweets) {
         // 取得したツイートをCoreDataに保存
         wself.insertOperation = [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets];
-//        [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets];
     }];
 }
 

@@ -131,7 +131,7 @@
 {
     return [self asyncRemoveRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                               YSCoreDataOperation *operation) {
-        
+
         NSFetchRequest* req = [[NSFetchRequest alloc] init];
         [req setEntity:[NSEntityDescription entityForName:@"Tweet"
                                    inManagedObjectContext:context]];

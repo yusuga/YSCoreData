@@ -21,12 +21,11 @@
 {
     NSAssert(bgContext != nil, @"context is nil;");
     
-    __weak typeof(self) wself = self;
     [bgContext performBlock:^{
         if (configure) {
-            configure(bgContext, wself);
+            configure(bgContext, self);
             
-            if (wself.isCancelled) {
+            if (self.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncWrite");
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (failure) failure(bgContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeWrite]);
@@ -53,10 +52,9 @@
 {
     NSAssert(bgContext != nil && mainContext != nil, @"context is nil;");
     
-    __weak typeof(self) wself = self;
     [bgContext performBlock:^{
         NSError *error = nil;
-        NSArray *results = [wself excuteFetchWithContext:bgContext
+        NSArray *results = [self excuteFetchWithContext:bgContext
                                    configureFetchRequest:configure
                                                    error:&error];
         if (error) {
@@ -98,12 +96,11 @@
 {
     NSAssert(bgContext != nil, @"context is nil;");
     
-    __weak typeof(self) wself = self;
     [bgContext performBlock:^{
         NSError *error = nil;
-        NSArray *results = [wself excuteFetchWithContext:bgContext
-                                   configureFetchRequest:configure
-                                                   error:&error];
+        NSArray *results = [self excuteFetchWithContext:bgContext
+                                  configureFetchRequest:configure
+                                                  error:&error];
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (failure) failure(bgContext, error);
@@ -114,7 +111,7 @@
         for (NSManagedObject *manaObj in results) {
             [bgContext deleteObject:manaObj];
         }
-        if (wself.isCancelled) {
+        if (self.isCancelled) {
             LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (failure) failure(bgContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeRemove]);
