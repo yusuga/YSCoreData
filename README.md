@@ -21,10 +21,15 @@ Overrideでの使用を想定しています。詳しくはExampleをご参考�
 ###Podspec
 CocoaPods/Specsに追加されてないので私のPodspecを追加する必要があります。
 
-    pod repo add yusuga git:github.com/yusuga/podspec.git
+
     
 ###Podfile
 
+    pod 'YSCoreData', :git => 'https://github.com/yusuga/YSCoreData.git'
+
+or  
+
+    pod repo add yusuga git:github.com/yusuga/podspec.git
     pod 'YSCoreData'
 
 License
