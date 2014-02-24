@@ -19,6 +19,8 @@
                  successInContextThread:(void (^)(void))success
                                 failure:(YSCoreDataOperationSaveFailure)failure
 {
+    NSAssert(bgContext != nil, @"context is nil;");
+    
     __weak typeof(self) wself = self;
     [bgContext performBlock:^{
         if (configure) {
@@ -27,14 +29,14 @@
             if (wself.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncWrite");
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (failure) failure(bgContext, nil);
+                    if (failure) failure(bgContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeWrite]);
                 });
                 return ;
             }
         } else {
-            NSLog(@"Error: asyncWrite; setting == nil");
+            NSAssert(0, @"Error: asyncWrite; setting == nil");
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (failure) failure(bgContext, nil);
+                if (failure) failure(bgContext, [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"]);
             });
             return ;
         }
@@ -49,52 +51,17 @@
                  successInContextThread:(YSCoreDataOperationAsyncFetchSuccess)success
                                 failure:(YSCoreDataOperationFailure)failure
 {
+    NSAssert(bgContext != nil && mainContext != nil, @"context is nil;");
+    
     __weak typeof(self) wself = self;
     [bgContext performBlock:^{
-        void(^errorFinish)(NSError *error) = ^(NSError *error){
-            dispatch_async(dispatch_get_main_queue(), ^{
-                failure(nil);
-            });
-        };
-        
-        NSFetchRequest *request;
-        if (configure) {
-            request = configure(bgContext, wself);
-
-            if (wself.isCancelled) {
-                LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-                errorFinish(nil);
-                return ;
-            }
-        } else {
-            NSLog(@"Error: asyncFetch; configure == nil");
-            errorFinish(nil);
-            return ;
-        }
-        
-        if (request == nil) {
-            NSLog(@"Error: asyncFetch; request == nil");
-            errorFinish(nil);
-            return ;
-        }
-        
         NSError *error = nil;
-        NSArray *fetchResults = [bgContext executeFetchRequest:request error:&error];
-        
-        if (wself.isCancelled) {
-            LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-            errorFinish(nil);
-            return ;
-        }
-        
+        NSArray *results = [wself excuteFetchWithContext:bgContext
+                                   configureFetchRequest:configure
+                                                   error:&error];
         if (error) {
-            errorFinish(error);
-            return;
-        }
-        
-        if ([fetchResults count] == 0) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (success) success(fetchResults);
+                if (failure) failure(error);
             });
             return;
         }
@@ -104,8 +71,8 @@
          スレッドセーフなNSManagedObjectIDを保持する
          ※ 正確に言うと、NSManagedObject自体は解放されてないんだけどpropertyが解放されている
          */
-        NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[fetchResults count]];
-        for (NSManagedObject *obj in fetchResults) {
+        NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[results count]];
+        for (NSManagedObject *obj in results) {
             [ids addObject:obj.objectID];
         }
         
@@ -129,6 +96,8 @@
                         successInContextThread:(void (^)(void))success
                                        failure:(YSCoreDataOperationSaveFailure)failure
 {
+    NSAssert(bgContext != nil, @"context is nil;");
+    
     __weak typeof(self) wself = self;
     [bgContext performBlock:^{
         NSError *error = nil;
@@ -136,15 +105,23 @@
                                    configureFetchRequest:configure
                                                    error:&error];
         if (error) {
-            NSLog(@"Error: execure; error = %@;", error);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (failure) failure(bgContext, error);
             });
             return;
         }
+        
         for (NSManagedObject *manaObj in results) {
             [bgContext deleteObject:manaObj];
         }
+        if (wself.isCancelled) {
+            LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (failure) failure(bgContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeRemove]);
+            });
+            return;
+        }
+        
         if (success) success();
     }];
 }
@@ -158,35 +135,44 @@
         req = configure(context, self);
         
         if (req == nil) {
-            NSLog(@"Error: asyncFetch; request == nil");
-//            *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+            NSString *desc = @"Fetch request is nil";
+            NSAssert(0, desc);
+            *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
             return nil;
         }
     } else {
-        NSLog(@"Error: asyncFetch; configure == nil");
-//        *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+        NSString *desc = @"Fetch configure is nil";
+        NSAssert(0, desc);
+        *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
         return nil;
     }
     
     if (self.isCancelled) {
-        LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-//        *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+        LOG_YSCORE_DATA(@"Cancel: asyncFetch; will execute fetch request;");
+        *error = [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeFetch];
         return nil;
     }
     
-    NSArray *fetchResults = [context executeFetchRequest:req error:error];
+    NSArray *results = [context executeFetchRequest:req error:error];
     
     if ((error && *error)) {
         LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", __func__, *error);
         return nil;
     }
     
-    if (self.isCancelled) {
-        LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-//        *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+    if ([results count] == 0) {
+        LOG_YSCORE_DATA(@"Result is none");
+        *error = [YSCoreDataError resultIsNoneError];
         return nil;
     }
-    return fetchResults;
+    
+    if (self.isCancelled) {
+        LOG_YSCORE_DATA(@"Cancel: asyncFetch; did execute fetch request;");
+        *error = [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeFetch];
+        return nil;
+    }
+    
+    return results;
 }
 
 #pragma mark -

@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 @import CoreData;
+#import "YSCoreDataError.h"
 
 #if DEBUG
     #if 0

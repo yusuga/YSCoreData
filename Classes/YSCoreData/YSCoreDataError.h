@@ -8,6 +8,26 @@
 
 #import <Foundation/Foundation.h>
 
+extern NSString * const YSCoreDataErrorDomain;
+
+typedef enum {
+    YSCoreDataErrorCodeUnknown,
+    YSCoreDataErrorCodeCancel,
+    YSCoreDataErrorCodeRequiredArgumentIsNil,
+    YSCoreDataErrorCodeResultIsNone,
+} YSCoreDataErrorCode;
+
+typedef enum {
+    YSCoreDataErrorOperationTypeUnkwnon,
+    YSCoreDataErrorOperationTypeWrite,
+    YSCoreDataErrorOperationTypeFetch,
+    YSCoreDataErrorOperationTypeRemove,
+} YSCoreDataErrorOperationType;
+
 @interface YSCoreDataError : NSObject
+
++ (NSError*)cancelErrorWithOperationType:(YSCoreDataErrorOperationType)operationType;
++ (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description;
++ (NSError*)resultIsNoneError;
 
 @end

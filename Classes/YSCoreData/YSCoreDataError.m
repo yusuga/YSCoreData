@@ -8,6 +8,47 @@
 
 #import "YSCoreDataError.h"
 
+NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
+
 @implementation YSCoreDataError
+
++ (NSError*)errorWithCode:(YSCoreDataErrorCode)code description:(NSString*)description
+{
+    return [NSError errorWithDomain:YSCoreDataErrorDomain
+                               code:code
+                           userInfo:@{NSLocalizedDescriptionKey : description}];
+}
+
+#pragma mark - Public
+
++ (NSError*)cancelErrorWithOperationType:(YSCoreDataErrorOperationType)operationType
+{
+    NSString *desc;
+    switch (operationType) {
+        case YSCoreDataErrorOperationTypeWrite:
+            desc = @"Cancel write";
+            break;
+        case YSCoreDataErrorOperationTypeFetch:
+            desc = @"Cancel fetch";
+            break;
+        case YSCoreDataErrorOperationTypeRemove:
+            desc = @"Cancel remove";
+            break;
+        default:
+            desc = [NSString stringWithFormat:@"Cancel Unknown (%@)", @(operationType)];
+            break;
+    }
+    return [self errorWithCode:YSCoreDataErrorCodeCancel description:desc];
+}
+
++ (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description
+{
+    return [self errorWithCode:YSCoreDataErrorCodeRequiredArgumentIsNil description:description];
+}
+
++ (NSError *)resultIsNoneError
+{
+    return [self errorWithCode:YSCoreDataErrorCodeResultIsNone description:@"Result is none"];
+}
 
 @end

@@ -29,6 +29,7 @@
 - (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
 {
     if (![tweetJsons isKindOfClass:[NSArray class]]) {
+        NSAssert1(0, @"%s; tweetJsons is not NSArray class;", __func__);
         NSLog(@"Error: %s; tweetJsons != NSArray class; tweetJsons class = %@;", __func__, NSStringFromClass([tweetJsons class]));
         return nil;
     }

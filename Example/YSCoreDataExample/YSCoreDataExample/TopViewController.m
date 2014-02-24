@@ -37,7 +37,9 @@
     NSLog(@"%s", __func__);
     TwitterStorage *ts = [TwitterStorage sharedInstance];
     
+    __weak typeof(self) wself = self;
     [ts removeAllTweetRecordWithSuccess:^{
+        [wself removeFetchedResultsControllerCache];
         NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
         NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
     } failure:^(NSManagedObjectContext *context, NSError *error) {
@@ -49,22 +51,28 @@
 {
     [[TwitterStorage sharedInstance] deleteDatabase];
     [TwitterRequest resetState];
+    [self removeFetchedResultsControllerCache];
     
+    [[[UIAlertView alloc] initWithTitle:@"データベースを削除しました" message:nil delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
+}
+
+#pragma mark -
+
+- (void)removeFetchedResultsControllerCache
+{
     /**
      NSFetchedResultsControllerのキャッシュを削除
      データベースだけ削除してNSFetchedResultsControllerのキャッシュを削除しなかった場合に、例えば
      
      - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
      {
-        id <NSFetchedResultsSectionInfo> sectionInfo = [[self.fetchedResultsController sections] objectAtIndex:section];
-        return [sectionInfo numberOfObjects];
+     id <NSFetchedResultsSectionInfo> sectionInfo = [[self.fetchedResultsController sections] objectAtIndex:section];
+     return [sectionInfo numberOfObjects];
      }
      
      でキャッシュのデータを返されてしまう場合がある
      */
     [NSFetchedResultsController deleteCacheWithName:@"Twitter"];
-    
-    [[[UIAlertView alloc] initWithTitle:@"データベースを削除しました" message:nil delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
 }
 
 @end
