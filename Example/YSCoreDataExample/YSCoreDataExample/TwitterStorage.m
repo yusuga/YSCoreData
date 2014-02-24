@@ -125,4 +125,17 @@
             }];
 }
 
+- (YSCoreDataOperation*)removeAllTweetRecordWithSuccess:(void (^)(void))success
+                                                failure:(YSCoreDataOperationSaveFailure)failure
+{
+    return [self asyncRemoveRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
+                                                                              YSCoreDataOperation *operation) {
+        
+        NSFetchRequest* req = [[NSFetchRequest alloc] init];
+        [req setEntity:[NSEntityDescription entityForName:@"Tweet"
+                                   inManagedObjectContext:context]];
+        return req;
+    } success:success failure:failure];
+}
+
 @end

@@ -36,7 +36,8 @@
 {
     NSLog(@"%s", __func__);
     TwitterStorage *ts = [TwitterStorage sharedInstance];
-    [ts removeRecordWithEntitiyName:@"Tweet" success:^{
+    
+    [ts removeAllTweetRecordWithSuccess:^{
         NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
         NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
     } failure:^(NSManagedObjectContext *context, NSError *error) {

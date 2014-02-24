@@ -25,4 +25,8 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
                                  success:(TwitterStorageFetchTweetsSuccess)success
                                  failure:(TwitterStorageFetchTweetsFailure)failure;
 
+- (YSCoreDataOperation*)removeAllTweetRecordWithSuccess:(void (^)(void))success
+                                                failure:(YSCoreDataOperationSaveFailure)failure;
+
+
 @end

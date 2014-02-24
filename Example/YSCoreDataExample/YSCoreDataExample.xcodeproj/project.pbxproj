@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		B82204A918BA0150002E2D73 /* YSCoreDataOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = B82204A818BA0150002E2D73 /* YSCoreDataOperation.m */; };
+		B82204AC18BAC9A6002E2D73 /* YSCoreDataError.m in Sources */ = {isa = PBXBuildFile; fileRef = B82204AB18BAC9A6002E2D73 /* YSCoreDataError.m */; };
 		B8251D0118B219650062F6D5 /* ManualFetchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0018B219650062F6D5 /* ManualFetchViewController.m */; };
 		B8251D0418B21B8C0062F6D5 /* AutoFetchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0318B21B8C0062F6D5 /* AutoFetchViewController.m */; };
 		B8251D0718B26B580062F6D5 /* TwitterRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0618B26B580062F6D5 /* TwitterRequest.m */; };
@@ -50,6 +51,8 @@
 		A7DE0EA3D9E14400B24EC2B3 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
 		B82204A718BA0150002E2D73 /* YSCoreDataOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YSCoreDataOperation.h; sourceTree = "<group>"; };
 		B82204A818BA0150002E2D73 /* YSCoreDataOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YSCoreDataOperation.m; sourceTree = "<group>"; };
+		B82204AA18BAC9A6002E2D73 /* YSCoreDataError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YSCoreDataError.h; sourceTree = "<group>"; };
+		B82204AB18BAC9A6002E2D73 /* YSCoreDataError.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YSCoreDataError.m; sourceTree = "<group>"; };
 		B8251CFF18B219650062F6D5 /* ManualFetchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ManualFetchViewController.h; sourceTree = "<group>"; };
 		B8251D0018B219650062F6D5 /* ManualFetchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ManualFetchViewController.m; sourceTree = "<group>"; };
 		B8251D0218B21B8C0062F6D5 /* AutoFetchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AutoFetchViewController.h; sourceTree = "<group>"; };
@@ -215,6 +218,8 @@
 				B854F57918AC84600070727A /* YSCoreData.m */,
 				B82204A718BA0150002E2D73 /* YSCoreDataOperation.h */,
 				B82204A818BA0150002E2D73 /* YSCoreDataOperation.m */,
+				B82204AA18BAC9A6002E2D73 /* YSCoreDataError.h */,
+				B82204AB18BAC9A6002E2D73 /* YSCoreDataError.m */,
 			);
 			name = YSCoreData;
 			path = ../../Classes/YSCoreData;
@@ -397,6 +402,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B854F59218AC9AC30070727A /* User.m in Sources */,
+				B82204AC18BAC9A6002E2D73 /* YSCoreDataError.m in Sources */,
 				B854F58618AC95C20070727A /* DetailViewController.m in Sources */,
 				B82204A918BA0150002E2D73 /* YSCoreDataOperation.m in Sources */,
 				B854F58018AC94F60070727A /* Twitter.xcdatamodeld in Sources */,

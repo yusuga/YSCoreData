@@ -15,7 +15,7 @@
 @implementation YSCoreDataOperation
 
 - (void)asyncWriteWithBackgroundContext:(NSManagedObjectContext*)bgContext
-                 configureManagedObject:(YSCoreDataOperationAysncWriteConfigure)configure
+                 configureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                  successInContextThread:(void (^)(void))success
                                 failure:(YSCoreDataOperationSaveFailure)failure
 {
@@ -45,8 +45,8 @@
 
 - (void)asyncFetchWithBackgroundContext:(NSManagedObjectContext*)bgContext
                             mainContext:(NSManagedObjectContext*)mainContext
-                  configureFetchRequest:(YSCoreDataOperationAysncFetchConfigure)configure
-                 successInContextThread:(YSCoreDataOperationAysncFetchSuccess)success
+                  configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                 successInContextThread:(YSCoreDataOperationAsyncFetchSuccess)success
                                 failure:(YSCoreDataOperationFailure)failure
 {
     __weak typeof(self) wself = self;
@@ -123,6 +123,73 @@
         }];
     }];
 }
+
+- (void)asyncRemoveRecordWithBackgroundContext:(NSManagedObjectContext *)bgContext
+                         configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                        successInContextThread:(void (^)(void))success
+                                       failure:(YSCoreDataOperationSaveFailure)failure
+{
+    __weak typeof(self) wself = self;
+    [bgContext performBlock:^{
+        NSError *error = nil;
+        NSArray *results = [wself excuteFetchWithContext:bgContext
+                                   configureFetchRequest:configure
+                                                   error:&error];
+        if (error) {
+            NSLog(@"Error: execure; error = %@;", error);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (failure) failure(bgContext, error);
+            });
+            return;
+        }
+        for (NSManagedObject *manaObj in results) {
+            [bgContext deleteObject:manaObj];
+        }
+        if (success) success();
+    }];
+}
+
+- (NSArray*)excuteFetchWithContext:(NSManagedObjectContext*)context
+                      configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                             error:(NSError**)error
+{
+    NSFetchRequest *req;
+    if (configure) {
+        req = configure(context, self);
+        
+        if (req == nil) {
+            NSLog(@"Error: asyncFetch; request == nil");
+//            *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+            return nil;
+        }
+    } else {
+        NSLog(@"Error: asyncFetch; configure == nil");
+//        *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+        return nil;
+    }
+    
+    if (self.isCancelled) {
+        LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
+//        *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+        return nil;
+    }
+    
+    NSArray *fetchResults = [context executeFetchRequest:req error:error];
+    
+    if ((error && *error)) {
+        LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", __func__, *error);
+        return nil;
+    }
+    
+    if (self.isCancelled) {
+        LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
+//        *error = [NSError errorWithDomain:<#(NSString *)#> code:<#(NSInteger)#> userInfo:<#(NSDictionary *)#>]
+        return nil;
+    }
+    return fetchResults;
+}
+
+#pragma mark -
 
 - (void)cancel
 {

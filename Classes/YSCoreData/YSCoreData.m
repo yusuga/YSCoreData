@@ -97,7 +97,7 @@
 
 #pragma mark - Async
 
-- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAysncWriteConfigure)configure
+- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                                      success:(void (^)(void))success
                                                      failure:(YSCoreDataOperationSaveFailure)failure
 {
@@ -127,8 +127,8 @@
     return ope;
 }
 
-- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAysncFetchConfigure)configure
-                                                    success:(YSCoreDataOperationAysncFetchSuccess)success
+- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                                    success:(YSCoreDataOperationAsyncFetchSuccess)success
                                                     failure:(YSCoreDataOperationFailure)failure
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
@@ -210,33 +210,26 @@
     return count == NSNotFound ? 0 : count;
 }
 
-- (void)removeRecordWithEntitiyName:(NSString *)entityName
-                            success:(void(^)(void))success
-                            failure:(YSCoreDataOperationSaveFailure)failure
+- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                           success:(void(^)(void))success
+                                           failure:(YSCoreDataOperationSaveFailure)failure
 {
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
     __weak typeof(self) wself = self;
-    [tempContext performBlock:^{
-        NSFetchRequest* req = [[NSFetchRequest alloc] init];
-        [req setEntity:[NSEntityDescription entityForName:entityName
-                                   inManagedObjectContext:tempContext]];
-        NSError* error = nil;
-        NSArray *results = [tempContext executeFetchRequest:req error:&error];
-        if (error) {
-            NSLog(@"Error: execure; error = %@;", error);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (failure) failure(tempContext, error);
-            });
-            return;
-        }
-        for (NSManagedObject *manaObj in results) {
-            [tempContext deleteObject:manaObj];
-        }
-        [wself saveWithTemporaryContext:tempContext didMergeMainContext:^{
-            if (success) success();
-        } didSaveSQLite:nil failure:failure];
-    }];
+    [ope asyncRemoveRecordWithBackgroundContext:tempContext
+                          configureFetchRequest:configure
+                         successInContextThread:^{
+                             
+                             [wself saveWithTemporaryContext:tempContext
+                                         didMergeMainContext:success
+                                               didSaveSQLite:nil
+                                                     failure:failure];
+                             
+                         } failure:failure];
+    
+    return ope;
 }
 
 #pragma mark - Property
