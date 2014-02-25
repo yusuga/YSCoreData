@@ -192,7 +192,7 @@
             
             if (self.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-                if (failure) failure([YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeRemove]);
+                if (failure) failure([YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeFetch]);
                 return;
             }
             
