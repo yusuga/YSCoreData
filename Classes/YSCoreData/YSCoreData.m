@@ -100,23 +100,17 @@
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                                      success:(void (^)(void))success
                                                      failure:(YSCoreDataOperationSaveFailure)failure
+                                               didSaveSQLite:(void (^)(void))didSaveSQLite
 {
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
-    __weak typeof(self) wself = self;
-    [ope asyncWriteWithBackgroundContext:tempContext
-                  configureManagedObject:configure
-                  successInContextThread:^(NSManagedObjectContext *context){
-
-                      [wself saveWithTemporaryContext:context
-                                  didMergeMainContext:success
-                                        didSaveSQLite:nil
-                                              failure:failure];
-
-                  } failure:^(NSManagedObjectContext *context, NSError *error) {
-                      if (failure) failure(context, error);
-                  }];
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
+                                                                         mainContext:self.mainContext
+                                                                privateWriterContext:self.privateWriterContext];
+    [ope asyncWriteWithconfigureManagedObject:configure
+                                      success:success
+                                      failure:failure
+                                didSaveSQLite:didSaveSQLite];
     return ope;
 }
 
@@ -124,15 +118,14 @@
                                                     success:(YSCoreDataOperationFetchSuccess)success
                                                     failure:(YSCoreDataOperationFailure)failure
 {
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
-    [ope asyncFetchWithBackgroundContext:tempContext
-                             mainContext:self.mainContext
-                   configureFetchRequest:configure
-                                 success:success
-                                 failure:failure];
-    
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
+                                                                         mainContext:self.mainContext
+                                                                privateWriterContext:self.privateWriterContext];
+    [ope asyncFetchWithConfigureFetchRequest:configure
+                                     success:success
+                                     failure:failure];
     return ope;    
 }
 
@@ -156,82 +149,18 @@
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                                            success:(void(^)(void))success
                                                            failure:(YSCoreDataOperationSaveFailure)failure
+                                                     didSaveSQLite:(void (^)(void))didSaveSQLite
 {
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] init];
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
-    __weak typeof(self) wself = self;
-    [ope asyncRemoveRecordWithBackgroundContext:tempContext
-                          configureFetchRequest:configure
-                         successInContextThread:^(NSManagedObjectContext *context){
-                             
-                             [wself saveWithTemporaryContext:tempContext
-                                         didMergeMainContext:success
-                                               didSaveSQLite:nil
-                                                     failure:failure];
-                             
-                         } failure:failure];
-    
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
+                                                                         mainContext:self.mainContext
+                                                                privateWriterContext:self.privateWriterContext];
+    [ope asyncRemoveRecordWithConfigureFetchRequest:configure
+                                            success:success
+                                            failure:failure
+                                      didSaveSQLite:didSaveSQLite];
     return ope;
-}
-
-#pragma mark - Save
-
-- (void)saveWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
-             didMergeMainContext:(void(^)(void))didMergeMainContext
-                   didSaveSQLite:(void(^)(void))didSaveSQLite
-                         failure:(YSCoreDataOperationSaveFailure)failure
-{
-    /*
-     temporaryContextの-performBlock:から呼び出されることを前提としている
-     */
-
-    // コンテキストが変更されていなければ保存しない
-    if (!temporaryContext.hasChanges) {
-        LOG_YSCORE_DATA(@"temporaryContext.hasChanges == NO");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (didMergeMainContext) didMergeMainContext();
-        });
-        return;
-    }
-    
-    __weak typeof(self) wself = self;
-    NSError *error = nil;
-    LOG_YSCORE_DATA(@"Will save temporaryContext");
-    if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
-        NSLog(@"Error: temporaryContext save; error = %@;", error);
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (failure) failure(temporaryContext, nil);
-        });
-        return;
-    }
-    LOG_YSCORE_DATA(@"Did save temporaryContext");
-    [wself.mainContext performBlock:^{
-        if (didMergeMainContext) didMergeMainContext();
-        NSError *error = nil;
-        if (![wself.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
-            NSLog(@"Error: mainContext save; error = %@;", error);
-            if (failure) failure(wself.mainContext, nil);
-            return ;
-        }
-        LOG_YSCORE_DATA(@"Did save mainContext");
-        [wself.privateWriterContext performBlock:^{
-            NSError *error = nil;
-            if (![wself.privateWriterContext save:&error]) { // SQLiteへ保存
-                NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (failure) failure(wself.privateWriterContext, nil);
-                });
-                return ;
-            }
-            LOG_YSCORE_DATA(@"Did save privateWriterContext");
-            if (didSaveSQLite) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    didSaveSQLite();
-                });
-            }
-        }];
-    }];
 }
 
 #pragma mark - Property

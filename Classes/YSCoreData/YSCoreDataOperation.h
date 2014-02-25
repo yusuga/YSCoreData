@@ -28,7 +28,6 @@ typedef void(^YSCoreDataOperationAsyncWriteConfigure)(NSManagedObjectContext *co
 typedef NSFetchRequest*(^YSCoreDataOperationAsyncFetchRequestConfigure)(NSManagedObjectContext *context,
                                                                  YSCoreDataOperation *operation);
 
-typedef void(^YSCoreDataOperationSuccess)(NSManagedObjectContext *context);
 typedef void(^YSCoreDataOperationFetchSuccess)(NSArray *fetchResults);
 
 typedef void(^YSCoreDataOperationFailure)(NSError *error);
@@ -37,21 +36,25 @@ typedef void(^YSCoreDataOperationSaveFailure)(NSManagedObjectContext *context, N
 
 @interface YSCoreDataOperation : NSObject
 
-- (void)asyncWriteWithBackgroundContext:(NSManagedObjectContext*)bgContext
-                 configureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                 successInContextThread:(YSCoreDataOperationSuccess)success
-                                failure:(YSCoreDataOperationSaveFailure)failure;
+- (id)initWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
+                   mainContext:(NSManagedObjectContext*)mainContext
+          privateWriterContext:(NSManagedObjectContext*)privateWriterContext;
 
-- (void)asyncFetchWithBackgroundContext:(NSManagedObjectContext*)bgContext
-                            mainContext:(NSManagedObjectContext*)mainContext
-                  configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                 success:(YSCoreDataOperationFetchSuccess)success
-                                failure:(YSCoreDataOperationFailure)failure;
+- (void)asyncWriteWithconfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+                                     success:(void(^)(void))success
+                                     failure:(YSCoreDataOperationSaveFailure)failure
+                               didSaveSQLite:(void(^)(void))didSaveSQLite;
 
-- (void)asyncRemoveRecordWithBackgroundContext:(NSManagedObjectContext*)bgContext
-                         configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                        successInContextThread:(YSCoreDataOperationSuccess)success
-                                       failure:(YSCoreDataOperationSaveFailure)failure;
+
+- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                    success:(YSCoreDataOperationFetchSuccess)success
+                                    failure:(YSCoreDataOperationFailure)failure;
+
+
+- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                           success:(void(^)(void))success
+                                           failure:(YSCoreDataOperationSaveFailure)failure
+                                     didSaveSQLite:(void(^)(void))didSaveSQLite;
 
 - (void)cancel;
 @property (nonatomic, readonly) BOOL isCancelled;

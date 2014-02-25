@@ -25,7 +25,8 @@ typedef enum {
 
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                                      success:(void(^)(void))success
-                                                     failure:(YSCoreDataOperationSaveFailure)failure;
+                                                     failure:(YSCoreDataOperationSaveFailure)failure
+                                               didSaveSQLite:(void(^)(void))didSaveSQLite;
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                     success:(YSCoreDataOperationFetchSuccess)success
@@ -35,7 +36,8 @@ typedef enum {
 
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                                            success:(void(^)(void))success
-                                                           failure:(YSCoreDataOperationSaveFailure)failure;
+                                                           failure:(YSCoreDataOperationSaveFailure)failure
+                                                     didSaveSQLite:(void(^)(void))didSaveSQLite;
 
 - (BOOL)deleteDatabase;
 
