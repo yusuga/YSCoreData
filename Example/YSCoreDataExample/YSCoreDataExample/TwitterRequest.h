@@ -12,7 +12,11 @@ typedef void(^RequestTwitterCompletion)(NSArray *newTweets);
 
 @interface TwitterRequest : NSObject
 
-+ (void)requestTweetsWithLimit:(NSUInteger)limit completion:(RequestTwitterCompletion)completion;
++ (void)requestTweetsWithMaxCount:(NSUInteger)maxCount completion:(RequestTwitterCompletion)completion;
++ (void)requestTweetsWithCount:(NSUInteger)count completion:(RequestTwitterCompletion)completion;
 + (void)resetState;
+
++ (NSArray*)userNames;
++ (NSArray*)screenNames;
 
 @end

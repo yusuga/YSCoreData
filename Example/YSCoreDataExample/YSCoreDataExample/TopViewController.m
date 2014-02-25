@@ -26,8 +26,8 @@
     [super viewWillAppear:animated];
     
     TwitterStorage *ts = [TwitterStorage sharedInstance];
-    NSLog(@"count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
-    NSLog(@"count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+    NSLog(@"count Tweet = %@", @([ts countTweetRecord]));
+    NSLog(@"count User = %@", @([ts countUserRecord]));
 }
 
 #pragma mark - Button action
@@ -40,11 +40,11 @@
     __weak typeof(self) wself = self;
     [ts removeAllTweetRecordWithSuccess:^{
         [wself removeFetchedResultsControllerCache];
-        NSLog(@">count Tweet = %@", @([ts countRecordWithEntitiyName:@"Tweet"]));
-        NSLog(@">count User = %@", @([ts countRecordWithEntitiyName:@"User"]));
+        NSLog(@">count Tweet = %@", @([ts countTweetRecord]));
+        NSLog(@">count User = %@", @([ts countUserRecord]));
     } failure:^(NSManagedObjectContext *context, NSError *error) {
         NSLog(@"error %@", error);
-    }];
+    } didSaveSQLite:nil];
 }
 
 - (IBAction)deleteDatabaseButtonDidPush:(id)sender

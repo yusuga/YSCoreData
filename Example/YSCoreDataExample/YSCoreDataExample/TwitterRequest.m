@@ -19,17 +19,23 @@ static NSUInteger s_virtualTweetId; // Twitterの仮想なリクエストのた�
     s_virtualTweetId = [[NSUserDefaults standardUserDefaults] integerForKey:kVirtualTweetId];
 }
 
-+ (void)requestTweetsWithLimit:(NSUInteger)limit completion:(RequestTwitterCompletion)completion
+
++ (void)requestTweetsWithMaxCount:(NSUInteger)maxCount completion:(RequestTwitterCompletion)completion
 {
-    NSUInteger count = arc4random_uniform(limit) + 1; // limit個のツイートを取得
-    
+    NSUInteger count = arc4random_uniform(maxCount) + 1; // limit個のツイートを取得
+    [self requestTweetsWithCount:count completion:completion];
+}
+
++ (void)requestTweetsWithCount:(NSUInteger)count completion:(RequestTwitterCompletion)completion
+{
     // ツイートを取得する仮想なリクエスト
     NSMutableArray *newTweets = [NSMutableArray array];
     for (int i = 0; i < count; i++) {
         NSArray *texts = @[@"おはようございます", @"こんにちは", @"こんばんは", @"さようなら", @"いい天気ですね"];
         NSString *text = [texts objectAtIndex:arc4random_uniform([texts count])]; // ランダムなtext
-        NSArray *names = @[@"羽生", @"高橋", @"町田", @"小塚", @"織田"];
-        NSArray *screenNames = @[@"hanyu", @"takahashi", @"machida", @"kozuka", @"oda"];
+        NSArray *names = [self userNames];
+        NSArray *screenNames = [self screenNames];
+        NSAssert2([names count] == [screenNames count], @"[names count] != [screenNames count]; [names count] = %@; [screenNames count] = %@;", @([names count]), @([screenNames count]));
         NSUInteger userId = arc4random_uniform([names count]); // ランダムなuser id
         NSString *name = [names objectAtIndex:userId];
         NSString *screenName = [screenNames objectAtIndex:userId];
@@ -56,6 +62,16 @@ static NSUInteger s_virtualTweetId; // Twitterの仮想なリクエストのた�
     //    NSLog(@"get new tweets = \n%@", newTweets);
     
     if (completion) completion(newTweets);
+}
+
++ (NSArray*)userNames
+{
+    return @[@"羽生", @"高橋", @"町田", @"小塚", @"織田"];
+}
+
++ (NSArray*)screenNames
+{
+    return @[@"hanyu", @"takahashi", @"machida", @"kozuka", @"oda"];
 }
 
 + (void)resetState

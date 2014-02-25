@@ -22,11 +22,20 @@
 }
 
 - (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson
+                                         success:(void (^)(void))success
+                                         failure:(YSCoreDataOperationSaveFailure)failure
+                                   didSaveSQLite:(void (^)(void))didSaveSQLite
 {
-    return [self insertTweetsWithTweetJsons:@[tweetJson]];
+    return [self insertTweetsWithTweetJsons:@[tweetJson]
+                                    success:success
+                                    failure:failure
+                              didSaveSQLite:didSaveSQLite];
 }
 
 - (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
+                                           success:(void (^)(void))success
+                                           failure:(YSCoreDataOperationSaveFailure)failure
+                                     didSaveSQLite:(void (^)(void))didSaveSQLite
 {
     if (![tweetJsons isKindOfClass:[NSArray class]]) {
         NSAssert1(0, @"%s; tweetJsons is not NSArray class;", __func__);
@@ -92,9 +101,7 @@
             
             tweet.user = user;
         }
-    } success:nil failure:^(NSManagedObjectContext *context, NSError *error) {
-        NSLog(@"Failure: error = %@", error);
-    }];
+    } success:success failure:failure didSaveSQLite:didSaveSQLite];
 }
 
 - (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
@@ -128,6 +135,7 @@
 
 - (YSCoreDataOperation*)removeAllTweetRecordWithSuccess:(void (^)(void))success
                                                 failure:(YSCoreDataOperationSaveFailure)failure
+                                          didSaveSQLite:(void (^)(void))didSaveSQLite
 {
     return [self asyncRemoveRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                               YSCoreDataOperation *operation) {
@@ -136,7 +144,18 @@
         [req setEntity:[NSEntityDescription entityForName:@"Tweet"
                                    inManagedObjectContext:context]];
         return req;
-    } success:success failure:failure];
+    } success:success failure:failure didSaveSQLite:didSaveSQLite];
 }
+
+- (NSUInteger)countTweetRecord
+{
+    return [self countRecordWithEntitiyName:@"Tweet"];
+}
+
+- (NSUInteger)countUserRecord
+{
+    return [self countRecordWithEntitiyName:@"User"];
+}
+
 
 @end

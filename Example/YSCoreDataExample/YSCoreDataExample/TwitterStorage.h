@@ -17,8 +17,15 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 
 + (instancetype)sharedInstance;
 
-- (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson;
-- (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons;
+- (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson
+                                         success:(void(^)(void))success
+                                         failure:(YSCoreDataOperationSaveFailure)failure
+                                   didSaveSQLite:(void(^)(void))didSaveSQLite;
+
+- (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
+                                           success:(void(^)(void))success
+                                           failure:(YSCoreDataOperationSaveFailure)failure
+                                     didSaveSQLite:(void(^)(void))didSaveSQLite;
 
 - (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
                                    maxId:(NSNumber *)maxId
@@ -26,7 +33,10 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
                                  failure:(TwitterStorageFetchTweetsFailure)failure;
 
 - (YSCoreDataOperation*)removeAllTweetRecordWithSuccess:(void (^)(void))success
-                                                failure:(YSCoreDataOperationSaveFailure)failure;
+                                                failure:(YSCoreDataOperationSaveFailure)failure
+                                          didSaveSQLite:(void(^)(void))didSaveSQLite;
 
+- (NSUInteger)countTweetRecord;
+- (NSUInteger)countUserRecord;
 
 @end
