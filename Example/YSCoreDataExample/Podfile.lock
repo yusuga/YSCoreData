@@ -1,10 +1,17 @@
 PODS:
+  - NSRunLoop-PerformBlock (0.1.1)
   - YSFileManager (0.0.2)
 
 DEPENDENCIES:
+  - NSRunLoop-PerformBlock (from `https://github.com/ishkawa/NSRunLoop-PerformBlock.git`)
   - YSFileManager
 
+EXTERNAL SOURCES:
+  NSRunLoop-PerformBlock:
+    :git: https://github.com/ishkawa/NSRunLoop-PerformBlock.git
+
 SPEC CHECKSUMS:
+  NSRunLoop-PerformBlock: 4b81c48d1c88cb7a0f1bf299685a7ca6756f13a9
   YSFileManager: 00787fd5e350f14c3601e3ec3aad7e4cb7eefbc9
 
 COCOAPODS: 0.29.0
