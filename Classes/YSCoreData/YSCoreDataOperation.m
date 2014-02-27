@@ -248,35 +248,31 @@
         return;
     }
     
-    NSManagedObjectContext *temporaryContext = self.temporaryContext;
-    NSManagedObjectContext *mainContext = self.mainContext;
-    NSManagedObjectContext *privateWriterContext = self.privateWriterContext;
-    
     NSError *error = nil;
     LOG_YSCORE_DATA(@"Will save temporaryContext");
-    if (![temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
+    if (![self.temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"Error: temporaryContext save; error = %@;", error);
-            if (failure) failure(temporaryContext, nil);
+            if (failure) failure(self.temporaryContext, [YSCoreDataError saveErrorWithType:YSCoreDataErrorSaveTypeTemporaryContext]);
         });
         return;
     }
     LOG_YSCORE_DATA(@"Did save temporaryContext");
-    [mainContext performBlock:^{
+    [self.mainContext performBlock:^{
         if (didMergeMainContext) didMergeMainContext();
         NSError *error = nil;
-        if (![mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
+        if (![self.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
             NSLog(@"Error: mainContext save; error = %@;", error);
-            if (failure) failure(mainContext, nil);
+            if (failure) failure(self.mainContext, [YSCoreDataError saveErrorWithType:YSCoreDataErrorSaveTypeMainContext]);
             return ;
         }
         LOG_YSCORE_DATA(@"Did save mainContext");
-        [privateWriterContext performBlock:^{
+        [self.privateWriterContext performBlock:^{
             NSError *error = nil;
-            if (![privateWriterContext save:&error]) { // SQLiteへ保存
+            if (![self.privateWriterContext save:&error]) { // SQLiteへ保存
                 dispatch_async(dispatch_get_main_queue(), ^{
                     NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                    if (failure) failure(privateWriterContext, nil);
+                    if (failure) failure(self.privateWriterContext, [YSCoreDataError saveErrorWithType:YSCoreDataErrorSaveTypePrivateWriterContext]);
                 });
                 return ;
             }
