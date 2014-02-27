@@ -32,7 +32,7 @@ typedef enum {
 
 @interface YSCoreDataError : NSObject
 
-+ (NSError*)cancelErrorWithOperationType:(YSCoreDataErrorOperationType)operationType;
++ (NSError*)cancelErrorWithType:(YSCoreDataErrorOperationType)operationType;
 + (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description;
 + (NSError*)saveErrorWithType:(YSCoreDataErrorSaveType)saveType;
 

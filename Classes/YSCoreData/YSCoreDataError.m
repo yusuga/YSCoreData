@@ -21,18 +21,18 @@ NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
 
 #pragma mark - Public
 
-+ (NSError*)cancelErrorWithOperationType:(YSCoreDataErrorOperationType)operationType
++ (NSError*)cancelErrorWithType:(YSCoreDataErrorOperationType)operationType
 {
     NSString *desc;
     switch (operationType) {
         case YSCoreDataErrorOperationTypeWrite:
-            desc = @"Cancel write";
+            desc = @"Cancel the write operation.";
             break;
         case YSCoreDataErrorOperationTypeFetch:
-            desc = @"Cancel fetch";
+            desc = @"Cancel the fetch operation.";
             break;
         case YSCoreDataErrorOperationTypeRemove:
-            desc = @"Cancel remove";
+            desc = @"Cancel the remove operation.";
             break;
         default:
             desc = [NSString stringWithFormat:@"Cancel Unknown (%@)", @(operationType)];

@@ -52,7 +52,7 @@
             if (self.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncWrite");
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (failure) failure(self.temporaryContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeWrite]);
+                    if (failure) failure(self.temporaryContext, [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite]);
                 });
                 return ;
             }
@@ -108,7 +108,7 @@
             
             if (self.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-                if (failure) failure([YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeFetch]);
+                if (failure) failure([YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch]);
                 return;
             }
             
@@ -172,7 +172,7 @@
         if (self.isCancelled) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
-                if (failure) failure(self.temporaryContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeRemove]);
+                if (failure) failure(self.temporaryContext, [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove]);
             });
             return;
         }
@@ -208,7 +208,7 @@
     
     if (self.isCancelled) {
         LOG_YSCORE_DATA(@"Cancel: asyncFetch; will execute fetch request;");
-        *error = [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeFetch];
+        *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
         return nil;
     }
     
@@ -221,7 +221,7 @@
     
     if (self.isCancelled) {
         LOG_YSCORE_DATA(@"Cancel: asyncFetch; did execute fetch request;");
-        *error = [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeFetch];
+        *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
         return nil;
     }
     
