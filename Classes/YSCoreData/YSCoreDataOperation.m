@@ -40,36 +40,6 @@
     return self;
 }
 
-//- (void)asyncWriteWithBackgroundContext:(NSManagedObjectContext*)bgContext
-//                 configureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-//                 successInContextThread:(YSCoreDataOperationSuccess)success
-//                                failure:(YSCoreDataOperationSaveFailure)failure
-//{
-//    NSAssert(bgContext != nil, @"context is nil;");
-//    
-//    [bgContext performBlock:^{
-//        if (configure) {
-//            configure(bgContext, self);
-//            
-//            if (self.isCancelled) {
-//                LOG_YSCORE_DATA(@"Cancel: asyncWrite");
-//                dispatch_async(dispatch_get_main_queue(), ^{
-//                    if (failure) failure(bgContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeWrite]);
-//                });
-//                return ;
-//            }
-//        } else {
-//            NSAssert(0, @"Error: asyncWrite; setting == nil");
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                if (failure) failure(bgContext, [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"]);
-//            });
-//            return ;
-//        }
-//        
-//        if (success) success(bgContext);
-//    }];
-//}
-
 - (void)asyncWriteWithconfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                      success:(void (^)(void))success
                                      failure:(YSCoreDataOperationSaveFailure)failure
@@ -99,60 +69,6 @@
                                   failure:failure];
     }];
 }
-
-
-//- (void)asyncFetchWithBackgroundContext:(NSManagedObjectContext*)bgContext
-//                            mainContext:(NSManagedObjectContext*)mainContext
-//                  configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-//                 success:(YSCoreDataOperationFetchSuccess)success
-//                                failure:(YSCoreDataOperationFailure)failure
-//{
-//    NSAssert(bgContext != nil && mainContext != nil, @"context is nil;");
-//    
-//    [bgContext performBlock:^{
-//        NSError *error = nil;
-//        NSArray *results = [self excuteFetchWithContext:bgContext
-//                                   configureFetchRequest:configure
-//                                                   error:&error];
-//        if (error) {
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                if (failure) failure(error);
-//            });
-//            return;
-//        }
-//        
-//        if ([results count] == 0) {
-//            LOG_YSCORE_DATA(@"Fetch result is none");
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                if (success) success(results);
-//            });
-//            return;
-//        }
-//        
-//        /*
-//         FetchしたNSManagedObjectを別スレッドに渡せない(temporaryContextと共に解放される)ので
-//         スレッドセーフなNSManagedObjectIDを保持する
-//         ※ 正確に言うと、NSManagedObject自体は解放されてないんだけどpropertyが解放されている
-//         */
-//        NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[results count]];
-//        for (NSManagedObject *obj in results) {
-//            [ids addObject:obj.objectID];
-//        }
-//        
-//        [mainContext performBlock:^{ // == dispatch_async(dispatch_get_main_queue(), ^{
-//            /*
-//             mainContext(NSMainQueueConcurrencyTypeで初期化したContext)から
-//             保持していたNSManagedObjectIDを元にNSManagedObjectを取得
-//             */
-//            NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
-//            for (NSManagedObjectID *objId in ids) {
-//                [fetchResults addObject:[mainContext objectWithID:objId]];
-//            }
-//            LOG_YSCORE_DATA(@"Success: Fetch %@", @([fetchResults count]));
-//            if (success) success(fetchResults);
-//        }];
-//    }];
-//}
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                     success:(YSCoreDataOperationFetchSuccess)success
@@ -223,48 +139,6 @@
         }];
     }];
 }
-
-
-//- (void)asyncRemoveRecordWithBackgroundContext:(NSManagedObjectContext *)bgContext
-//                         configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-//                        successInContextThread:(YSCoreDataOperationSuccess)success
-//                                       failure:(YSCoreDataOperationSaveFailure)failure
-//{
-//    NSAssert(bgContext != nil, @"context is nil;");
-//    
-//    [bgContext performBlock:^{
-//        NSError *error = nil;
-//        NSArray *results = [self excuteFetchWithContext:bgContext
-//                                  configureFetchRequest:configure
-//                                                  error:&error];
-//        if (error) {
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                if (failure) failure(bgContext, error);
-//            });
-//            return;
-//        }
-//        
-//        if ([results count] == 0) {
-//            LOG_YSCORE_DATA(@"Fetch result is none");
-//            if (success) success(bgContext);
-//            return;
-//        }
-//        
-//        for (NSManagedObject *manaObj in results) {
-//            [bgContext deleteObject:manaObj];
-//        }
-//        
-//        if (self.isCancelled) {
-//            LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
-//            dispatch_async(dispatch_get_main_queue(), ^{
-//                if (failure) failure(bgContext, [YSCoreDataError cancelErrorWithOperationType:YSCoreDataErrorOperationTypeRemove]);
-//            });
-//            return;
-//        }
-//        
-//        if (success) success(bgContext);
-//    }];
-//}
 
 - (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                            success:(void (^)(void))success
