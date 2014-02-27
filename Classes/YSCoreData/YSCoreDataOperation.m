@@ -199,11 +199,24 @@
             /*
              mainContext(NSMainQueueConcurrencyTypeで初期化したContext)から
              保持していたNSManagedObjectIDを元にNSManagedObjectを取得
+             
+             -objectWithID:, -objectRegisteredForID:, -existingObjectWithID:error: の違い。
+             ( http://xcatsan.blogspot.jp/2010/06/coredata-object-idobject-id_04.html )
+             
+             ※ ただ、-existingObjectWithID:error:は該当オブジェクトがNSManagedObjectContextに登録されてない場合に
+             必ずしも非Faultになるわけではなかった。
              */
             
             NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
             for (NSManagedObjectID *objId in ids) {
-                [fetchResults addObject:[self.mainContext objectWithID:objId]];
+                NSError *error = nil;
+                NSManagedObject *obj = [self.mainContext existingObjectWithID:objId error:&error];
+                if (obj == nil || error) {
+                    NSLog(@"Error: Fetch; error = %@;", error);
+                    if (failure) failure(error);
+                    return;
+                }
+                [fetchResults addObject:obj];
             }
             LOG_YSCORE_DATA(@"Success: Fetch %@", @([fetchResults count]));
             if (success) success(fetchResults);
