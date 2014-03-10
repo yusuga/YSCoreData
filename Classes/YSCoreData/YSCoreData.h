@@ -21,6 +21,10 @@ typedef enum {
 - (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
                          databasePath:(NSString *)databasePath;
 
+- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
+                         databasePath:(NSString *)databasePath
+                             modelName:(NSString*)modelName;
+
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure

@@ -13,6 +13,7 @@
 
 @property (nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 @property (nonatomic) NSManagedObjectModel *managedObjectModel;
+@property (nonatomic, copy) NSString *modelName;
 @property (nonatomic) NSManagedObjectContext *privateWriterContext;
 
 @property (nonatomic) YSCoreDataDirectoryType directoryType;
@@ -26,11 +27,20 @@
 @synthesize mainContext = _mainContext;
 @synthesize databaseFullPath = _databaseFullPath;
 
-- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType databasePath:(NSString *)databasePath
+- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
+                         databasePath:(NSString *)databasePath
+{
+    return [self initWithDirectoryType:directoryType databasePath:databasePath modelName:nil];
+}
+
+- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
+                         databasePath:(NSString *)databasePath
+                            modelName:(NSString *)modelName
 {
     if (self = [super init]) {
         self.directoryType = directoryType;
         self.databasePath = databasePath;
+        self.modelName = modelName;
         [self privateWriterContext]; // setup
     }
     return self;
@@ -186,7 +196,12 @@
 {
     if (_managedObjectModel == nil) {
         LOG_YSCORE_DATA(@"Init %s", __func__);
-        _managedObjectModel = [NSManagedObjectModel mergedModelFromBundles:nil];
+        if (self.modelName) {
+            NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:@"modelUrl" withExtension:@"momd"];
+            _managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelUrl];
+        } else {
+            _managedObjectModel = [NSManagedObjectModel mergedModelFromBundles:nil];
+        }
     }
     return _managedObjectModel;
 }
