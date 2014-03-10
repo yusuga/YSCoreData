@@ -46,7 +46,7 @@
     return [self asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context,
                                                         YSCoreDataOperation *operation)
     {
-        NSLog(@"Start: Insert %d", [tweetJsons count]);
+        NSLog(@"Start: Insert %@", @([tweetJsons count]));
         for (NSDictionary *tweetJson in tweetJsons) {
             if (operation.isCancelled) {
                 return;

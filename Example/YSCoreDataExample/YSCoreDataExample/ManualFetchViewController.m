@@ -55,7 +55,7 @@
     Tweet *tw = [self.tweets firstObject];
     self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
         NSUInteger tweetsCount = [tweets count];
-        NSLog(@"fetch tweets %d", tweetsCount);
+        NSLog(@"fetch tweets %@", @(tweetsCount));
         if (tweetsCount == 0) {
             return;
         }
