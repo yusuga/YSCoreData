@@ -14,6 +14,7 @@ typedef enum {
     YSCoreDataDirectoryTypeDocument,
     YSCoreDataDirectoryTypeTemporary,
     YSCoreDataDirectoryTypeCaches,
+    YSCoreDataDirectoryTypeMainBundle,
 } YSCoreDataDirectoryType;
 
 @interface YSCoreData : NSObject

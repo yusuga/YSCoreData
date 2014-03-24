@@ -13,7 +13,7 @@
 #import "TwitterRequest.h"
 
 static NSString * const kCoreDataPath = @"CoreData.db";
-static NSString * const kTwitterStoragePath = @"TwitterStorage";
+static NSString * const kTwitterStoragePath = @"Twitter.db";
 static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDocument;
 
 @interface YSCoreDataExampleTests : XCTestCase
@@ -43,6 +43,28 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
 {
     return [[TwitterStorage alloc] initWithDirectoryType:kDirectoryType databasePath:kTwitterStoragePath];
 }
+
+- (TwitterStorage*)twitterStorageOfMainBundle
+{
+    return [[TwitterStorage alloc] initWithDirectoryType:YSCoreDataDirectoryTypeMainBundle databasePath:kTwitterStoragePath];
+}
+
+//- (void)testRemoveAllRecord
+//{
+//    
+//    [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
+//        TwitterStorage *twitterStorage = [self twitterStorageOfMainBundle];
+//        [twitterStorage removeAllTweetRecordWithSuccess:^{
+//            
+//        } failure:^(NSManagedObjectContext *context, NSError *error) {
+//            XCTFail(@"%@", error);
+//        } didSaveSQLite:^{
+//            XCTAssert([twitterStorage countTweetRecord] == 0 &&
+//                      [twitterStorage countUserRecord] == 0, @"");
+//            *finish = YES;
+//        }];
+//    }];
+//}
 
 - (void)testAsyncWirteCancelError
 {
@@ -85,15 +107,37 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
 {
     TwitterStorage *twitterStorage = [self twitterStorage];
     
-    // Delete database file
+    // delete database file
     NSString *path = [YSFileManager documentDirectoryWithAppendingPathComponent:kTwitterStoragePath];
     XCTAssert([YSFileManager fileExistsAtPath:path]);
     [twitterStorage deleteDatabase];
     XCTAssertFalse([YSFileManager fileExistsAtPath:path]);
     
+    [self databaseTestWithTwitterStorage:twitterStorage];
+}
+
+- (void)testMainBundle
+{
+    [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
+        TwitterStorage *twitterStorage = [self twitterStorageOfMainBundle];
+        [twitterStorage removeAllTweetRecordWithSuccess:^{
+            
+        } failure:^(NSManagedObjectContext *context, NSError *error) {
+            XCTFail(@"%@", error);
+        } didSaveSQLite:^{
+            XCTAssert([twitterStorage countTweetRecord] == 0, @"couunt tweet recored: %@", @([twitterStorage countTweetRecord]));
+            *finish = YES;
+        }];
+    }];
+    
+    [self databaseTestWithTwitterStorage:[self twitterStorageOfMainBundle]];
+}
+
+- (void)databaseTestWithTwitterStorage:(TwitterStorage*)twitterStorage
+{
     NSUInteger insertCount = 100;
     
-    // 100件 Insert
+    // insert 100
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
         [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
             [twitterStorage insertTweetsWithTweetJsons:newTweets success:^{
@@ -107,8 +151,10 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
         }];
     }];
     
+    // count record
+    XCTAssert([twitterStorage countTweetRecord] == insertCount, @"count tweet record: %@", @([twitterStorage countTweetRecord]));
     
-    // 10件 Fetch
+    // fetch 10
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
         [twitterStorage fetchTweetsLimit:10 maxId:nil success:^(NSArray *tweets) {
             if ([tweets count] != 10) {
@@ -132,7 +178,7 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
         }];
     }];
     
-    // UserがUniqueか
+    // is user unique
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
         NSUInteger savedUserNum = [twitterStorage countUserRecord];
         NSUInteger maxUserNum = [[TwitterRequest userNames] count];
@@ -140,7 +186,7 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
         *finish = YES;
     }];
     
-    // Remove record
+    // remove record
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
         [twitterStorage removeAllTweetRecordWithSuccess:^{
             

@@ -16,8 +16,6 @@
 @property (nonatomic, copy) NSString *modelName;
 @property (nonatomic) NSManagedObjectContext *privateWriterContext;
 
-@property (nonatomic) YSCoreDataDirectoryType directoryType;
-@property (nonatomic) NSString *databasePath;
 @property (nonatomic) NSString *databaseFullPath;
 
 @end
@@ -25,7 +23,6 @@
 
 @implementation YSCoreData
 @synthesize mainContext = _mainContext;
-@synthesize databaseFullPath = _databaseFullPath;
 
 - (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
                          databasePath:(NSString *)databasePath
@@ -38,51 +35,51 @@
                             modelName:(NSString *)modelName
 {
     if (self = [super init]) {
-        self.directoryType = directoryType;
-        self.databasePath = databasePath;
+        self.databaseFullPath = [self databaseFullPathWithDirectoryType:directoryType databasePath:databasePath];
         self.modelName = modelName;
         [self privateWriterContext]; // setup
     }
     return self;
 }
 
-- (NSString*)databaseFullPath
+- (NSString*)databaseFullPathWithDirectoryType:(YSCoreDataDirectoryType)directoryType databasePath:(NSString*)databasePath
 {
-    if (_databaseFullPath == nil) {
-        NSString *basePath;
-        switch (self.directoryType) {
-            case YSCoreDataDirectoryTypeDocument:
-                basePath = [YSFileManager documentDirectory];
-                break;
-            case YSCoreDataDirectoryTypeTemporary:
-                basePath = [YSFileManager temporaryDirectory];
-                break;
-            case YSCoreDataDirectoryTypeCaches:
-                basePath = [YSFileManager cachesDirectory];
-                break;
-            default:
-                basePath = [YSFileManager documentDirectory];
-                NSAssert2(0, @"Unexpected error: %s; Unknown directoryType = %@;", __func__, @(self.directoryType));
-                break;
-        }
-        NSString *databasePath = self.databasePath;
-        if (databasePath == nil || databasePath.length == 0) {
-            databasePath = @"Database.db";
-        }
-        NSArray *pathComponents = [databasePath pathComponents];
-        if ([pathComponents count] > 1) {
-            // ディレクトリの作成
-            [YSFileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:[databasePath stringByDeletingLastPathComponent]]];
-        }
-        _databaseFullPath = [basePath stringByAppendingPathComponent:databasePath];
+    if (directoryType == YSCoreDataDirectoryTypeMainBundle) {
+        return [[NSBundle mainBundle] pathForResource:databasePath ofType:nil];
     }
-    return _databaseFullPath;
+    
+    NSString *basePath;
+    switch (directoryType) {
+        case YSCoreDataDirectoryTypeDocument:
+            basePath = [YSFileManager documentDirectory];
+            break;
+        case YSCoreDataDirectoryTypeTemporary:
+            basePath = [YSFileManager temporaryDirectory];
+            break;
+        case YSCoreDataDirectoryTypeCaches:
+            basePath = [YSFileManager cachesDirectory];
+            break;
+        default:
+            basePath = [YSFileManager documentDirectory];
+            NSAssert2(0, @"Unexpected error: %s; Unknown directoryType = %@;", __func__, @(directoryType));
+            break;
+    }
+    NSString *dbPath = databasePath;
+    if (databasePath == nil || databasePath.length == 0) {
+        dbPath = @"Database.db";
+    }
+    NSArray *pathComponents = [dbPath pathComponents];
+    if ([pathComponents count] > 1) {
+        // ディレクトリの作成
+        [YSFileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:[databasePath stringByDeletingLastPathComponent]]];
+    }
+    return [basePath stringByAppendingPathComponent:databasePath];
 }
 
 - (BOOL)deleteDatabase
 {
     NSLog(@"%s", __func__);
-    NSString *path = [self databaseFullPath];
+    NSString *path = self.databaseFullPath;
     BOOL ret = [YSFileManager removeAtPath:path];
     [YSFileManager removeAtPath:[path stringByAppendingString:@"-shm"]];
     [YSFileManager removeAtPath:[path stringByAppendingString:@"-wal"]];
@@ -160,7 +157,7 @@
                                                            success:(void(^)(void))success
                                                            failure:(YSCoreDataOperationSaveFailure)failure
                                                      didSaveSQLite:(void (^)(void))didSaveSQLite
-{
+{    
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
@@ -179,14 +176,14 @@
 {
     if (_persistentStoreCoordinator == nil) {
         LOG_YSCORE_DATA(@"Init %s", __func__);
-        NSURL *storeUrl = [NSURL fileURLWithPath:[self databaseFullPath]];
+        NSURL *url = [NSURL fileURLWithPath:self.databaseFullPath];
         NSError *error = nil;
         _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:self.managedObjectModel];
-        if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeUrl options:nil error:&error]) {
+        if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:url options:nil error:&error]) {
             NSLog(@"Error: %s; error = %@;", __func__, error);
         }
 #if DEBUG
-        NSLog(@"Database path = %@", [self databaseFullPath]);
+        NSLog(@"Database full path = %@", self.databaseFullPath);
 #endif
     }
     return _persistentStoreCoordinator;
