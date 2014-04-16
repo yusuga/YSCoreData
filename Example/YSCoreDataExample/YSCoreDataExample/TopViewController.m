@@ -38,12 +38,14 @@
     TwitterStorage *ts = [TwitterStorage sharedInstance];
     
     __weak typeof(self) wself = self;
-    [ts removeAllTweetRecordWithSuccess:^{
+    [ts removeAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
+        if (error) {
+            NSLog(@"error %@", error);
+            return ;
+        }
         [wself removeFetchedResultsControllerCache];
         NSLog(@">count Tweet = %@", @([ts countTweetRecord]));
         NSLog(@">count User = %@", @([ts countUserRecord]));
-    } failure:^(NSManagedObjectContext *context, NSError *error) {
-        NSLog(@"error %@", error);
     } didSaveSQLite:nil];
 }
 

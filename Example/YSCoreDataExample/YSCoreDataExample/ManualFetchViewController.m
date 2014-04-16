@@ -53,24 +53,27 @@
     // CoreDataからツイートを取得
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
-    self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id success:^(NSArray *tweets) {
-        NSUInteger tweetsCount = [tweets count];
-        NSLog(@"fetch tweets %@", @(tweetsCount));
-        if (tweetsCount == 0) {
-            return;
-        }
-        
-        // TableViewに反映
-        NSIndexSet *set = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, tweetsCount)];
-        [wself.tweets insertObjects:tweets atIndexes:set];
-        NSMutableArray *paths = [NSMutableArray arrayWithCapacity:tweetsCount];
-        for (int i = 0; i < tweetsCount; i++) {
-            [paths addObject:[NSIndexPath indexPathForRow:i inSection:0]];
-        }
-        [wself.tableView insertRowsAtIndexPaths:paths withRowAnimation:UITableViewRowAnimationTop];
-    } failure:^(NSError *error) {
-        NSLog(@"Failure: error = %@", error);
-    }];
+    self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id completion:^(NSManagedObjectContext *context, NSArray *tweets, NSError *error)
+                           {
+                               if (error) {
+                                   NSLog(@"Failure: error = %@", error);
+                                   return ;
+                               }
+                               NSUInteger tweetsCount = [tweets count];
+                               NSLog(@"fetch tweets %@", @(tweetsCount));
+                               if (tweetsCount == 0) {
+                                   return;
+                               }
+                               
+                               // TableViewに反映
+                               NSIndexSet *set = [NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, tweetsCount)];
+                               [wself.tweets insertObjects:tweets atIndexes:set];
+                               NSMutableArray *paths = [NSMutableArray arrayWithCapacity:tweetsCount];
+                               for (int i = 0; i < tweetsCount; i++) {
+                                   [paths addObject:[NSIndexPath indexPathForRow:i inSection:0]];
+                               }
+                               [wself.tableView insertRowsAtIndexPaths:paths withRowAnimation:UITableViewRowAnimationTop];
+                           }];
 }
 
 @end

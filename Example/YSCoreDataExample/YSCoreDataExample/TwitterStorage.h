@@ -18,23 +18,19 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 + (instancetype)sharedInstance;
 
 - (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson
-                                         success:(void(^)(void))success
-                                         failure:(YSCoreDataOperationSaveFailure)failure
-                                   didSaveSQLite:(void(^)(void))didSaveSQLite;
+                                      completion:(YSCoreDataOperationCompletion)completion
+                                   didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
-                                           success:(void(^)(void))success
-                                           failure:(YSCoreDataOperationSaveFailure)failure
-                                     didSaveSQLite:(void(^)(void))didSaveSQLite;
+                                        completion:(YSCoreDataOperationCompletion)completion
+                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
                                    maxId:(NSNumber *)maxId
-                                 success:(TwitterStorageFetchTweetsSuccess)success
-                                 failure:(TwitterStorageFetchTweetsFailure)failure;
+                              completion:(YSCoreDataOperationFetchCompletion)completion;
 
-- (YSCoreDataOperation*)removeAllTweetRecordWithSuccess:(void (^)(void))success
-                                                failure:(YSCoreDataOperationSaveFailure)failure
-                                          didSaveSQLite:(void(^)(void))didSaveSQLite;
+- (YSCoreDataOperation*)removeAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
+                                             didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (NSUInteger)countTweetRecord;
 - (NSUInteger)countUserRecord;

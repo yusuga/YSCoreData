@@ -73,13 +73,14 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
                                                                 YSCoreDataOperation *operation)
         {
             [operation cancel];
-        } success:^{
-            XCTFail();
-        } failure:^(NSManagedObjectContext *context, NSError *error) {
+        } completion:^(NSManagedObjectContext *context, NSError *error) {
+            if (error == nil) {
+                XCTFail();
+            }
             XCTAssert([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
             XCTAssert(error.code == YSCoreDataErrorCodeCancel, @"code = %@;", @(error.code));
             *finish = YES;
-        } didSaveSQLite:^{
+        } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
             XCTFail();
         }];
     }];
@@ -93,9 +94,10 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
         {
             [operation cancel];
             return [[NSFetchRequest alloc] init];
-        } success:^(NSArray *fetchResults) {
-            XCTFail();
-        } failure:^(NSError *error) {
+        } completion:^(NSManagedObjectContext *context, NSArray *fetchResults, NSError *error) {
+            if (error == nil) {
+                XCTFail();
+            }
             XCTAssert([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
             XCTAssert(error.code == YSCoreDataErrorCodeCancel, @"code = %@;", @(error.code));
             *finish = YES;
@@ -120,11 +122,11 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
 {
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
         TwitterStorage *twitterStorage = [self twitterStorageOfMainBundle];
-        [twitterStorage removeAllTweetRecordWithSuccess:^{
-            
-        } failure:^(NSManagedObjectContext *context, NSError *error) {
-            XCTFail(@"%@", error);
-        } didSaveSQLite:^{
+        [twitterStorage removeAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
+            if (error) {
+                XCTFail(@"%@", error);
+            }
+        } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
             XCTAssert([twitterStorage countTweetRecord] == 0, @"couunt tweet recored: %@", @([twitterStorage countTweetRecord]));
             *finish = YES;
         }];
@@ -140,11 +142,11 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
     // insert 100
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
         [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
-            [twitterStorage insertTweetsWithTweetJsons:newTweets success:^{
-                
-            } failure:^(NSManagedObjectContext *context, NSError *error) {
-                XCTFail(@"%@", error);
-            } didSaveSQLite:^{
+            [twitterStorage insertTweetsWithTweetJsons:newTweets completion:^(NSManagedObjectContext *context, NSError *error) {
+                if (error) {
+                    XCTFail(@"%@", error);
+                }
+            } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
                 XCTAssert([twitterStorage countTweetRecord] == insertCount, @"count = %@", @([twitterStorage countTweetRecord]));
                 *finish = YES;
             }];
@@ -156,26 +158,25 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
     
     // fetch 10
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
-        [twitterStorage fetchTweetsLimit:10 maxId:nil success:^(NSArray *tweets) {
-            if ([tweets count] != 10) {
-                XCTFail(@"%@", tweets);
-            }
-            for (Tweet *tw in tweets) {
-                XCTAssert([tw isKindOfClass:[Tweet class]], @"%@", NSStringFromClass([tw class]));
-                XCTAssert([tw.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
-                XCTAssert([tw.text isKindOfClass:[NSString class]], @"%@", NSStringFromClass([tw.text class]));
-                XCTAssert([tw.user_id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
-                
-                User *user = tw.user;
-                XCTAssert([user isKindOfClass:[User class]], @"%@", NSStringFromClass([user class]));
-                XCTAssert([user.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([user class]));
-                XCTAssert([user.name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
-                XCTAssert([user.screen_name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
-            }
-            *finish = YES;
-        } failure:^(NSError *error) {
-            XCTFail(@"%@", error);
-        }];
+        [twitterStorage fetchTweetsLimit:10 maxId:nil completion:^(NSManagedObjectContext *context, NSArray *tweets, NSError *error)
+         {
+             if (error || [tweets count] != 10) {
+                 XCTFail(@"%@", tweets);
+             }
+             for (Tweet *tw in tweets) {
+                 XCTAssert([tw isKindOfClass:[Tweet class]], @"%@", NSStringFromClass([tw class]));
+                 XCTAssert([tw.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
+                 XCTAssert([tw.text isKindOfClass:[NSString class]], @"%@", NSStringFromClass([tw.text class]));
+                 XCTAssert([tw.user_id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
+                 
+                 User *user = tw.user;
+                 XCTAssert([user isKindOfClass:[User class]], @"%@", NSStringFromClass([user class]));
+                 XCTAssert([user.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([user class]));
+                 XCTAssert([user.name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
+                 XCTAssert([user.screen_name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
+             }
+             *finish = YES;
+         }];
     }];
     
     // is user unique
@@ -188,11 +189,11 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
     
     // remove record
     [[NSRunLoop currentRunLoop] performBlockAndWait:^(BOOL *finish) {
-        [twitterStorage removeAllTweetRecordWithSuccess:^{
-            
-        } failure:^(NSManagedObjectContext *context, NSError *error) {
-            XCTFail(@"%@", error);
-        } didSaveSQLite:^{
+        [twitterStorage removeAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
+            if (error) {
+                XCTFail(@"%@", error);
+            }
+        } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
             XCTAssert([twitterStorage countTweetRecord] == 0, @"count = %@", @([twitterStorage countTweetRecord]));
             *finish = YES;
         }];

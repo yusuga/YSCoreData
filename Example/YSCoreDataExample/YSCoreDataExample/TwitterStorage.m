@@ -22,20 +22,17 @@
 }
 
 - (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson
-                                         success:(void (^)(void))success
-                                         failure:(YSCoreDataOperationSaveFailure)failure
-                                   didSaveSQLite:(void (^)(void))didSaveSQLite
+                                      completion:(YSCoreDataOperationCompletion)completion
+                                   didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     return [self insertTweetsWithTweetJsons:@[tweetJson]
-                                    success:success
-                                    failure:failure
+                                 completion:completion
                               didSaveSQLite:didSaveSQLite];
 }
 
 - (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
-                                           success:(void (^)(void))success
-                                           failure:(YSCoreDataOperationSaveFailure)failure
-                                     didSaveSQLite:(void (^)(void))didSaveSQLite
+                                        completion:(YSCoreDataOperationCompletion)completion
+                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     if (![tweetJsons isKindOfClass:[NSArray class]]) {
         NSAssert1(0, @"%s; tweetJsons is not NSArray class;", __func__);
@@ -101,13 +98,12 @@
             
             tweet.user = user;
         }
-    } success:success failure:failure didSaveSQLite:didSaveSQLite];
+    } completion:completion didSaveSQLite:didSaveSQLite];
 }
 
 - (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
                                    maxId:(NSNumber *)maxId
-                                 success:(TwitterStorageFetchTweetsSuccess)success
-                                 failure:(TwitterStorageFetchTweetsFailure)failure;
+                              completion:(YSCoreDataOperationFetchCompletion)completion
 {
     return [self asyncFetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                        YSCoreDataOperation *operation)
@@ -126,16 +122,11 @@
                 [request setSortDescriptors:@[sortDescriptor]];
                 
                 return request;
-            } success:^(NSArray *fetchResults) {
-                if (success) success(fetchResults);
-            } failure:^(NSError *error) {
-                if (failure) failure(error);
-            }];
+            } completion:completion];
 }
 
-- (YSCoreDataOperation*)removeAllTweetRecordWithSuccess:(void (^)(void))success
-                                                failure:(YSCoreDataOperationSaveFailure)failure
-                                          didSaveSQLite:(void (^)(void))didSaveSQLite
+- (YSCoreDataOperation*)removeAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
+                                             didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     return [self asyncRemoveRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                               YSCoreDataOperation *operation) {
@@ -144,7 +135,7 @@
         [req setEntity:[NSEntityDescription entityForName:@"Tweet"
                                    inManagedObjectContext:context]];
         return req;
-    } success:success failure:failure didSaveSQLite:didSaveSQLite];
+    } completion:completion didSaveSQLite:didSaveSQLite];
 }
 
 - (NSUInteger)countTweetRecord
