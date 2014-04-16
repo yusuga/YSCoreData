@@ -29,20 +29,17 @@ typedef enum {
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                                                     success:(void(^)(void))success
-                                                     failure:(YSCoreDataOperationSaveFailure)failure
-                                               didSaveSQLite:(void(^)(void))didSaveSQLite;
+                                                  completion:(YSCoreDataOperationCompletion)completion
+                                               didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                    success:(YSCoreDataOperationFetchSuccess)success
-                                    failure:(YSCoreDataOperationFailure)failure;
+                                                 completion:(YSCoreDataOperationFetchCompletion)completion;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                                           success:(void(^)(void))success
-                                                           failure:(YSCoreDataOperationSaveFailure)failure
-                                                     didSaveSQLite:(void(^)(void))didSaveSQLite;
+                                                        completion:(YSCoreDataOperationCompletion)completion
+                                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (BOOL)deleteDatabase;
 

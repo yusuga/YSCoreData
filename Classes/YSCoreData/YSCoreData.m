@@ -105,9 +105,8 @@
 #pragma mark - Async
 
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                                                     success:(void (^)(void))success
-                                                     failure:(YSCoreDataOperationSaveFailure)failure
-                                               didSaveSQLite:(void (^)(void))didSaveSQLite
+                                                  completion:(YSCoreDataOperationCompletion)completion
+                                               didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
@@ -115,15 +114,13 @@
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
     [ope asyncWriteWithconfigureManagedObject:configure
-                                      success:success
-                                      failure:failure
+                                   completion:completion
                                 didSaveSQLite:didSaveSQLite];
     return ope;
 }
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                                    success:(YSCoreDataOperationFetchSuccess)success
-                                                    failure:(YSCoreDataOperationFailure)failure
+                                                 completion:(YSCoreDataOperationFetchCompletion)completion
 {
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
@@ -131,8 +128,7 @@
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
     [ope asyncFetchWithConfigureFetchRequest:configure
-                                     success:success
-                                     failure:failure];
+                                  completion:completion];
     return ope;    
 }
 
@@ -154,9 +150,8 @@
 }
 
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                                           success:(void(^)(void))success
-                                                           failure:(YSCoreDataOperationSaveFailure)failure
-                                                     didSaveSQLite:(void (^)(void))didSaveSQLite
+                                                        completion:(YSCoreDataOperationCompletion)completion
+                                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {    
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
@@ -164,8 +159,7 @@
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
     [ope asyncRemoveRecordWithConfigureFetchRequest:configure
-                                            success:success
-                                            failure:failure
+                                         completion:completion
                                       didSaveSQLite:didSaveSQLite];
     return ope;
 }
