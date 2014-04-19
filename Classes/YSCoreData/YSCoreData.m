@@ -188,7 +188,14 @@
     if (_managedObjectModel == nil) {
         LOG_YSCORE_DATA(@"Init %s", __func__);
         if (self.modelName) {
-            NSURL *modelUrl = [[NSBundle mainBundle] URLForResource:@"modelUrl" withExtension:@"momd"];
+            NSURL *modelUrl;
+            if ([self.modelName pathExtension].length) {
+                modelUrl = [[NSBundle mainBundle] URLForResource:[self.modelName stringByDeletingPathExtension]
+                                                   withExtension:[self.modelName pathExtension]];
+            } else {
+                modelUrl = [[NSBundle mainBundle] URLForResource:self.modelName
+                                                   withExtension:@"momd"];
+            }
             _managedObjectModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:modelUrl];
         } else {
             _managedObjectModel = [NSManagedObjectModel mergedModelFromBundles:nil];
