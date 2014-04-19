@@ -16,7 +16,8 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         s_sharedInstance =  [[self alloc] initWithDirectoryType:YSCoreDataDirectoryTypeDocument
-                                                   databasePath:@"Twitter.db"];
+                                                   databasePath:@"Twitter.db"
+                                                      modelName:@"Twitter"];
     });
     return s_sharedInstance;
 }
