@@ -66,9 +66,9 @@
     __weak typeof(self) wself = self;
     [TwitterRequest requestTweetsWithMaxCount:self.getTweetLimit completion:^(NSArray *newTweets) {
         // 取得したツイートをCoreDataに保存
-        wself.insertOperation = [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:newTweets
-                                                                                 completion:nil
-                                                                              didSaveSQLite:nil];
+        wself.insertOperation = [[TwitterStorage sharedInstance] asyncInsertTweetsWithTweetJsons:newTweets
+                                                                                      completion:nil
+                                                                                   didSaveSQLite:nil];
     }];
 }
 

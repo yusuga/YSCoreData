@@ -1,9 +1,11 @@
 PODS:
   - NSRunLoop-PerformBlock (0.1.1)
-  - YSFileManager (0.0.2)
+  - TKRGuard (1.0.2)
+  - YSFileManager (0.0.3)
 
 DEPENDENCIES:
   - NSRunLoop-PerformBlock (from `https://github.com/ishkawa/NSRunLoop-PerformBlock.git`)
+  - TKRGuard
   - YSFileManager
 
 EXTERNAL SOURCES:
@@ -12,6 +14,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   NSRunLoop-PerformBlock: 4b81c48d1c88cb7a0f1bf299685a7ca6756f13a9
-  YSFileManager: 00787fd5e350f14c3601e3ec3aad7e4cb7eefbc9
+  TKRGuard: 2f31216eec4810f656ba191a8de418e845fecaa3
+  YSFileManager: 861157ba9b5dcdeebcf6240a9649f9604d460326
 
-COCOAPODS: 0.29.0
+COCOAPODS: 0.32.1

@@ -53,7 +53,7 @@
     // CoreDataからツイートを取得
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
-    self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id completion:^(NSManagedObjectContext *context, NSArray *tweets, NSError *error)
+    self.fetchOperation = [[TwitterStorage sharedInstance] asyncFetchTweetsLimit:10 maxId:tw.id completion:^(NSManagedObjectContext *context, NSArray *tweets, NSError *error)
                            {
                                if (error) {
                                    NSLog(@"Failure: error = %@", error);

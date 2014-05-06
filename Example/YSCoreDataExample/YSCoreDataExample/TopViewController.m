@@ -38,7 +38,7 @@
     TwitterStorage *ts = [TwitterStorage sharedInstance];
     
     __weak typeof(self) wself = self;
-    [ts removeAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
+    [ts asyncRemoveAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
         if (error) {
             NSLog(@"error %@", error);
             return ;

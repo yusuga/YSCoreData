@@ -13,6 +13,9 @@
 		B8251D0418B21B8C0062F6D5 /* AutoFetchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0318B21B8C0062F6D5 /* AutoFetchViewController.m */; };
 		B8251D0718B26B580062F6D5 /* TwitterRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0618B26B580062F6D5 /* TwitterRequest.m */; };
 		B8251D0A18B2769C0062F6D5 /* TopViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0918B2769C0062F6D5 /* TopViewController.m */; };
+		B84DE4871918E3070049A259 /* SyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE4861918E3070049A259 /* SyncTests.m */; };
+		B84DE48A1918E3870049A259 /* TestUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE4891918E3870049A259 /* TestUtility.m */; };
+		B84DE48F1918E7610049A259 /* UtilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE48E1918E7610049A259 /* UtilityTests.m */; };
 		B854F54318AC84260070727A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54218AC84260070727A /* Foundation.framework */; };
 		B854F54518AC84260070727A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54418AC84260070727A /* CoreGraphics.framework */; };
 		B854F54718AC84260070727A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54618AC84260070727A /* UIKit.framework */; };
@@ -25,7 +28,7 @@
 		B854F56318AC84260070727A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54218AC84260070727A /* Foundation.framework */; };
 		B854F56418AC84260070727A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54618AC84260070727A /* UIKit.framework */; };
 		B854F56C18AC84260070727A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = B854F56A18AC84260070727A /* InfoPlist.strings */; };
-		B854F56E18AC84260070727A /* YSCoreDataExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B854F56D18AC84260070727A /* YSCoreDataExampleTests.m */; };
+		B854F56E18AC84260070727A /* AsyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B854F56D18AC84260070727A /* AsyncTests.m */; };
 		B854F57A18AC84600070727A /* YSCoreData.m in Sources */ = {isa = PBXBuildFile; fileRef = B854F57918AC84600070727A /* YSCoreData.m */; };
 		B854F58018AC94F60070727A /* Twitter.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = B854F57E18AC94F60070727A /* Twitter.xcdatamodeld */; };
 		B854F58318AC95A60070727A /* TwitterStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = B854F58218AC95A60070727A /* TwitterStorage.m */; };
@@ -63,6 +66,10 @@
 		B8251D0618B26B580062F6D5 /* TwitterRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TwitterRequest.m; sourceTree = "<group>"; };
 		B8251D0818B2769C0062F6D5 /* TopViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopViewController.h; sourceTree = "<group>"; };
 		B8251D0918B2769C0062F6D5 /* TopViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TopViewController.m; sourceTree = "<group>"; };
+		B84DE4861918E3070049A259 /* SyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SyncTests.m; sourceTree = "<group>"; };
+		B84DE4881918E3870049A259 /* TestUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestUtility.h; sourceTree = "<group>"; };
+		B84DE4891918E3870049A259 /* TestUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestUtility.m; sourceTree = "<group>"; };
+		B84DE48E1918E7610049A259 /* UtilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UtilityTests.m; sourceTree = "<group>"; };
 		B854F53F18AC84260070727A /* YSCoreDataExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YSCoreDataExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B854F54218AC84260070727A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		B854F54418AC84260070727A /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -79,7 +86,7 @@
 		B854F56118AC84260070727A /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		B854F56918AC84260070727A /* YSCoreDataExampleTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "YSCoreDataExampleTests-Info.plist"; sourceTree = "<group>"; };
 		B854F56B18AC84260070727A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		B854F56D18AC84260070727A /* YSCoreDataExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = YSCoreDataExampleTests.m; sourceTree = "<group>"; };
+		B854F56D18AC84260070727A /* AsyncTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AsyncTests.m; sourceTree = "<group>"; };
 		B854F57818AC84600070727A /* YSCoreData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YSCoreData.h; sourceTree = "<group>"; };
 		B854F57918AC84600070727A /* YSCoreData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YSCoreData.m; sourceTree = "<group>"; };
 		B854F57F18AC94F60070727A /* Twitter.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Twitter.xcdatamodel; sourceTree = "<group>"; };
@@ -133,6 +140,15 @@
 				B854F59118AC9AC30070727A /* User.m */,
 			);
 			name = Model;
+			sourceTree = "<group>";
+		};
+		B84DE48B1918E3980049A259 /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				B84DE4881918E3870049A259 /* TestUtility.h */,
+				B84DE4891918E3870049A259 /* TestUtility.m */,
+			);
+			name = Utility;
 			sourceTree = "<group>";
 		};
 		B854F53618AC84260070727A = {
@@ -199,7 +215,10 @@
 		B854F56718AC84260070727A /* YSCoreDataExampleTests */ = {
 			isa = PBXGroup;
 			children = (
-				B854F56D18AC84260070727A /* YSCoreDataExampleTests.m */,
+				B84DE48E1918E7610049A259 /* UtilityTests.m */,
+				B854F56D18AC84260070727A /* AsyncTests.m */,
+				B84DE4861918E3070049A259 /* SyncTests.m */,
+				B84DE48B1918E3980049A259 /* Utility */,
 				B854F56818AC84260070727A /* Supporting Files */,
 				B862432D18E0778C00484665 /* SampleDatabase */,
 			);
@@ -437,7 +456,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B854F56E18AC84260070727A /* YSCoreDataExampleTests.m in Sources */,
+				B84DE48F1918E7610049A259 /* UtilityTests.m in Sources */,
+				B84DE48A1918E3870049A259 /* TestUtility.m in Sources */,
+				B84DE4871918E3070049A259 /* SyncTests.m in Sources */,
+				B854F56E18AC84260070727A /* AsyncTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

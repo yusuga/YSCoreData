@@ -17,20 +17,35 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 
 + (instancetype)sharedInstance;
 
-- (YSCoreDataOperation*)insertTweetWithTweetJson:(NSDictionary*)tweetJson
-                                      completion:(YSCoreDataOperationCompletion)completion
-                                   didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+// insert
 
-- (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
+- (BOOL)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
+                             error:(NSError**)error
+                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+- (YSCoreDataOperation*)asyncInsertTweetsWithTweetJsons:(NSArray*)tweetJsons
                                         completion:(YSCoreDataOperationCompletion)completion
                                      didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
-- (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
+// fetch
+
+- (NSArray*)fetchTweetsWithLimit:(NSUInteger)limit
+                           maxId:(NSNumber *)maxId
+                           error:(NSError**)error;
+
+- (YSCoreDataOperation*)asyncFetchTweetsLimit:(NSUInteger)limit
                                    maxId:(NSNumber *)maxId
                               completion:(YSCoreDataOperationFetchCompletion)completion;
 
-- (YSCoreDataOperation*)removeAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
+// remove
+
+- (BOOL)removeAllTweetRecordWithError:(NSError**)error
+                        didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+- (YSCoreDataOperation*)asyncRemoveAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
                                              didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+// count
 
 - (NSUInteger)countTweetRecord;
 - (NSUInteger)countUserRecord;
