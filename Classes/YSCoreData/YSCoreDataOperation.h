@@ -38,7 +38,7 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
                    mainContext:(NSManagedObjectContext*)mainContext
           privateWriterContext:(NSManagedObjectContext*)privateWriterContext;
 
-- (void)asyncWriteWithconfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 

@@ -40,7 +40,7 @@
     return self;
 }
 
-- (void)asyncWriteWithconfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {

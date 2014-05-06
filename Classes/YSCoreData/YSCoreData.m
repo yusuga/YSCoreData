@@ -113,7 +113,7 @@
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
-    [ope asyncWriteWithconfigureManagedObject:configure
+    [ope asyncWriteWithConfigureManagedObject:configure
                                    completion:completion
                                 didSaveSQLite:didSaveSQLite];
     return ope;
