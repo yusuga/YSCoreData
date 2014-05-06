@@ -28,14 +28,29 @@ typedef enum {
 
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
+// sync
+
+- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+                                  error:(NSError **)error
+                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                     error:(NSError **)error;
+
+- (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                        error:(NSError **)error
+                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
+
+// async
+
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                                   completion:(YSCoreDataOperationCompletion)completion
                                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                                  completion:(YSCoreDataOperationFetchCompletion)completion;
-
-- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                                         completion:(YSCoreDataOperationCompletion)completion

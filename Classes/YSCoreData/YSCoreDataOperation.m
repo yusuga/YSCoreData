@@ -40,6 +40,23 @@
     return self;
 }
 
+#pragma mark - write
+
+- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+                                  error:(NSError**)error
+                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+{
+    if (configure == nil) {
+        NSError *coreDataError = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
+        if (error != NULL) {
+            *error = coreDataError;
+        }
+        return NO;
+    }
+    configure(self.mainContext, self);
+    return [self save:error didSaveSQLite:didSaveSQLite];
+}
+
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
@@ -65,9 +82,19 @@
             return ;
         }
         
-        [self saveWithDidMergeMainContext:completion
+        [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
                             didSaveSQLite:didSaveSQLite];
     }];
+}
+
+#pragma mark - fetch
+
+- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                     error:(NSError**)error
+{
+    return [self excuteFetchWithContext:self.mainContext
+                  configureFetchRequest:configure
+                                  error:error];
 }
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
@@ -141,6 +168,23 @@
     }];
 }
 
+#pragma mark - remove
+
+- (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                        error:(NSError**)error
+                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+{
+    NSArray *results = [self excuteFetchWithContext:self.mainContext configureFetchRequest:configure error:error];
+    if (error != NULL && *error) {
+        return NO;
+    }
+    for (NSManagedObject *obj in results) {
+        [self.mainContext deleteObject:obj];
+    }
+    [self save:error didSaveSQLite:didSaveSQLite];
+    return YES;
+}
+
 - (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                         completion:(YSCoreDataOperationCompletion)completion
                                      didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
@@ -178,12 +222,12 @@
             return;
         }
         
-        [self saveWithDidMergeMainContext:completion
+        [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
                             didSaveSQLite:didSaveSQLite];
     }];
 }
 
-#pragma mark
+#pragma mark - excute
 
 - (NSArray*)excuteFetchWithContext:(NSManagedObjectContext*)context
              configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
@@ -196,19 +240,25 @@
         if (req == nil) {
             NSString *desc = @"Fetch request is nil";
             NSAssert(0, desc);
-            *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
+            if (error != NULL) {
+                *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
+            }
             return nil;
         }
     } else {
         NSString *desc = @"Fetch configure is nil";
         NSAssert(0, desc);
-        *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
+        if (error != NULL) {
+            *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
+        }
         return nil;
     }
     
     if (self.isCancelled) {
         LOG_YSCORE_DATA(@"Cancel: asyncFetch; will execute fetch request;");
-        *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
+        if (error != NULL) {
+            *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
+        }
         return nil;
     }
     
@@ -221,16 +271,28 @@
     
     if (self.isCancelled) {
         LOG_YSCORE_DATA(@"Cancel: asyncFetch; did execute fetch request;");
-        *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
+        if (error != NULL) {
+            *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
+        }
         return nil;
     }
     
     return results;
 }
 
-#pragma mark - Save
+#pragma mark - save
 
-- (void)saveWithDidMergeMainContext:(YSCoreDataOperationCompletion)didMergeMainContext
+- (BOOL)save:(NSError**)error didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+{
+    [self.mainContext save:error];
+    if (error != NULL && *error) {
+        return NO;
+    }
+    [self asyncSavePrivateWriterContextWithDidSaveSQLite:didSaveSQLite];
+    return YES;
+}
+
+- (void)asyncSaveTemporaryContextWithDidMergeMainContext:(YSCoreDataOperationCompletion)didMergeMainContext
                       didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     /*
@@ -269,23 +331,28 @@
             return ;
         }
         LOG_YSCORE_DATA(@"Did save mainContext");
-        [self.privateWriterContext performBlock:^{
-            NSError *error = nil;
-            if (![self.privateWriterContext save:&error]) { // SQLiteへ保存
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                    if (didSaveSQLite) didSaveSQLite(self.privateWriterContext,
-                                                     [YSCoreDataError saveErrorWithType:YSCoreDataErrorSaveTypePrivateWriterContext]);
-                });
-                return ;
-            }
-            LOG_YSCORE_DATA(@"Did save privateWriterContext");
-            if (didSaveSQLite) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    didSaveSQLite(self.privateWriterContext, nil);
-                });
-            }
-        }];
+        [self asyncSavePrivateWriterContextWithDidSaveSQLite:didSaveSQLite];
+    }];
+}
+
+- (void)asyncSavePrivateWriterContextWithDidSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+{
+    [self.privateWriterContext performBlock:^{
+        NSError *error = nil;
+        if (![self.privateWriterContext save:&error]) { // SQLiteへ保存
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSLog(@"Error: privateWriterContext save; error = %@;", error);
+                if (didSaveSQLite) didSaveSQLite(self.privateWriterContext,
+                                                 [YSCoreDataError saveErrorWithType:YSCoreDataErrorSaveTypePrivateWriterContext]);
+            });
+            return ;
+        }
+        LOG_YSCORE_DATA(@"Did save privateWriterContext");
+        if (didSaveSQLite) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                didSaveSQLite(self.privateWriterContext, nil);
+            });
+        }
     }];
 }
 

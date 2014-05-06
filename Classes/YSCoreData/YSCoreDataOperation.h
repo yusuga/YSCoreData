@@ -38,6 +38,21 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
                    mainContext:(NSManagedObjectContext*)mainContext
           privateWriterContext:(NSManagedObjectContext*)privateWriterContext;
 
+// sync
+
+- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+                                  error:(NSError**)error
+                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                     error:(NSError**)error;
+
+- (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                        error:(NSError**)error
+                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
+// async
+
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
