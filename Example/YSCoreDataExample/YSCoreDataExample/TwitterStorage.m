@@ -30,7 +30,7 @@
 {
     return [self writeWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         [self insertTweetsWithContext:context operation:operation tweetJsons:tweetJsons];
-    } error:error didSaveSQLite:didSaveSQLite];
+    } error:error didSaveStore:didSaveSQLite];
 }
 
 - (YSCoreDataOperation*)asyncInsertTweetsWithTweetJsons:(NSArray*)tweetJsons
@@ -47,7 +47,7 @@
                                                         YSCoreDataOperation *operation)
             {
                 [self insertTweetsWithContext:context operation:operation tweetJsons:tweetJsons];
-            } completion:completion didSaveSQLite:didSaveSQLite];
+            } completion:completion didSaveStore:didSaveSQLite];
 }
 
 - (void)insertTweetsWithContext:(NSManagedObjectContext*)context
@@ -158,10 +158,10 @@
 - (BOOL)removeAllTweetRecordWithError:(NSError**)error
                         didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
-    return [self removeRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation)
+    return [self removeObjectsWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation)
             {
                 return [self removeAllTweetRecordRequestWithContext:context];
-            } error:error didSaveSQLite:didSaveSQLite];
+            } error:error didSaveStore:didSaveSQLite];
 }
 
 - (YSCoreDataOperation*)asyncRemoveAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
@@ -171,7 +171,7 @@
                                                                               YSCoreDataOperation *operation)
             {
                 return [self removeAllTweetRecordRequestWithContext:context];
-            } completion:completion didSaveSQLite:didSaveSQLite];
+            } completion:completion didSaveStore:didSaveSQLite];
 }
 
 - (NSFetchRequest*)removeAllTweetRecordRequestWithContext:(NSManagedObjectContext*)context

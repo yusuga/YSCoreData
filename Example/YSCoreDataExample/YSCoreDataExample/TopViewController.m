@@ -59,7 +59,7 @@
              case 2:
              {
                  NSError *error = nil;
-                 BOOL success = [storage removeAllObjectsWithError:&error didSaveSQLite:^(NSManagedObjectContext *context, NSError *error)
+                 BOOL success = [storage removeAllObjectsWithError:&error didSaveStore:^(NSManagedObjectContext *context, NSError *error)
                  {
                      if (error) {
                          [[[UIAlertView alloc] initWithTitle:@"Error: removeAllObjects"
