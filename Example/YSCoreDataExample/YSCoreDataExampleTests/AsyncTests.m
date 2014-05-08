@@ -32,7 +32,12 @@
 
 - (void)testCancelWirte
 {
-    [[TestUtility coreData] asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context,
+    [self cancelWriteWithCoreData:[TestUtility coreDataWithStoreType:NSSQLiteStoreType]];
+}
+
+- (void)cancelWriteWithCoreData:(YSCoreData*)coreData
+{
+    [coreData asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context,
                                                                    YSCoreDataOperation *operation)
      {
          [operation cancel];
@@ -51,7 +56,12 @@
 
 - (void)testCancelFetch
 {
-    [[TestUtility coreData] asyncFetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
+    [self cancelFetchWithCoreData:[TestUtility coreDataWithStoreType:NSSQLiteStoreType]];
+}
+
+- (void)cancelFetchWithCoreData:(YSCoreData*)coreData
+{
+    [coreData asyncFetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                                   YSCoreDataOperation *operation)
      {
          [operation cancel];
@@ -70,12 +80,12 @@
 
 - (void)testAllOperationInTwitterStorage
 {
-    [self databaseTestWithTwitterStorage:[TestUtility twitterStorage]];
+    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageWithStoreType:NSSQLiteStoreType]];
 }
 
 - (void)testAllOperationInTwitterStorageOfMainBundle
 {
-    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageOfMainBundle]];
+    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageOfMainBundleWithStoreType:NSSQLiteStoreType]];
 }
 
 - (void)databaseTestWithTwitterStorage:(TwitterStorage*)twitterStorage

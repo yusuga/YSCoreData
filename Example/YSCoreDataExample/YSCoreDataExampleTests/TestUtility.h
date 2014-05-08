@@ -14,9 +14,9 @@ extern NSString * const kTwitterStoragePath;
 
 @interface TestUtility : NSObject
 
-+ (YSCoreData*)coreData;
-+ (TwitterStorage*)twitterStorage;
-+ (TwitterStorage*)twitterStorageOfMainBundle;
++ (YSCoreData*)coreDataWithStoreType:(NSString*)storeType;
++ (TwitterStorage*)twitterStorageWithStoreType:(NSString*)storeType;
++ (TwitterStorage*)twitterStorageOfMainBundleWithStoreType:(NSString*)storeType;
 
 + (void)cleanUpAllDatabase;
 

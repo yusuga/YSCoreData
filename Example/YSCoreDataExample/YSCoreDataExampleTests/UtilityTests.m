@@ -47,19 +47,19 @@
 
 - (void)testCreateCoreData
 {
-    XCTAssertNotNil([TestUtility coreData]);
+    XCTAssertNotNil([TestUtility coreDataWithStoreType:NSSQLiteStoreType]);
     XCTAssertTrue([YSFileManager fileExistsAtPath:[self coreDataPath]]);
 }
 
 - (void)testCreateTwitterStorage
 {
-    XCTAssertNotNil([TestUtility twitterStorage]);
+    XCTAssertNotNil([TestUtility twitterStorageWithStoreType:NSSQLiteStoreType]);
     XCTAssertTrue([YSFileManager fileExistsAtPath:[self twitterStoragePath]]);
 }
 
 - (void)testExistsTwitterStorageOfMainBundle
 {
-    XCTAssertNotNil([TestUtility twitterStorageOfMainBundle]);
+    XCTAssertNotNil([TestUtility twitterStorageOfMainBundleWithStoreType:NSSQLiteStoreType]);
     XCTAssertTrue([YSFileManager fileExistsAtPath:[self twitterStorageOfMainBundlePath]]);
 }
 

@@ -15,27 +15,36 @@ static YSCoreDataDirectoryType const kDirectoryType = YSCoreDataDirectoryTypeDoc
 
 @implementation TestUtility
 
-+ (YSCoreData*)coreData
++ (YSCoreData*)coreDataWithStoreType:(NSString*)storeType
 {
-    return [[YSCoreData alloc] initWithDirectoryType:kDirectoryType databasePath:kCoreDataPath];
+    return [[YSCoreData alloc] initWithDirectoryType:kDirectoryType
+                                        databasePath:kCoreDataPath
+                                           modelName:nil
+                                           storeType:storeType];
 }
 
-+ (TwitterStorage*)twitterStorage
++ (TwitterStorage*)twitterStorageWithStoreType:(NSString*)storeType
 {
-    return [[TwitterStorage alloc] initWithDirectoryType:kDirectoryType databasePath:kTwitterStoragePath];
+    return [[TwitterStorage alloc] initWithDirectoryType:kDirectoryType
+                                            databasePath:kTwitterStoragePath
+                                               modelName:nil
+                                               storeType:storeType];
 }
 
-+ (TwitterStorage*)twitterStorageOfMainBundle
++ (TwitterStorage*)twitterStorageOfMainBundleWithStoreType:(NSString*)storeType
 {
-    return [[TwitterStorage alloc] initWithDirectoryType:YSCoreDataDirectoryTypeMainBundle databasePath:kTwitterStoragePath];
+    return [[TwitterStorage alloc] initWithDirectoryType:YSCoreDataDirectoryTypeMainBundle
+                                            databasePath:kTwitterStoragePath
+                                               modelName:nil
+                                               storeType:storeType];
 }
 
 + (void)cleanUpAllDatabase
 {
-    [[TestUtility coreData] deleteDatabase];
-    [[TestUtility twitterStorage] deleteDatabase];
+    [[TestUtility coreDataWithStoreType:NSSQLiteStoreType] deleteDatabase];
+    [[TestUtility twitterStorageWithStoreType:NSSQLiteStoreType] deleteDatabase];
     
-    TwitterStorage *storage = [TestUtility twitterStorageOfMainBundle];
+    TwitterStorage *storage = [TestUtility twitterStorageOfMainBundleWithStoreType:NSSQLiteStoreType];
     NSString *key = @"remove";
     [storage asyncRemoveAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
         if (error) {

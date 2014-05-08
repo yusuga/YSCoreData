@@ -32,12 +32,12 @@
 
 - (void)testAllOperationInTwitterStorage
 {
-    [self databaseTestWithTwitterStorage:[TestUtility twitterStorage]];
+    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageWithStoreType:NSSQLiteStoreType]];
 }
 
 - (void)testAllOperationInTwitterStorageOfMainBundle
 {
-    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageOfMainBundle]];
+    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageOfMainBundleWithStoreType:NSSQLiteStoreType]];
 }
 
 - (void)databaseTestWithTwitterStorage:(TwitterStorage*)twitterStorage
@@ -89,9 +89,9 @@
     NSUInteger maxUserNum = [[TwitterRequest userNames] count];
     XCTAssertTrue(savedUserNum == maxUserNum, @"savedUserNum = %@, maxUserNum = %@", @(savedUserNum), @(maxUserNum));
     
-    // remove record
+    // remove all objects
     error = nil;
-    XCTAssertTrue([twitterStorage removeAllTweetRecordWithError:&error didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
+    XCTAssertTrue([twitterStorage removeAllObjectsWithError:&error didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
         if (error) {
             XCTFail(@"%@", error);
         }
@@ -99,6 +99,13 @@
     }]);
     XCTAssertNil(error, @"error: %@", error);
     WAIT;
+    
+    // count all entities
+    NSDictionary *countAllEntities = [twitterStorage countAllEntitiesByName];
+    XCTAssertTrue([countAllEntities count] > 0, @"countAllEntities count: %@", @([countAllEntities count]));
+    for (NSNumber *count in [countAllEntities allValues]) {
+        XCTAssertTrue(count.integerValue == 0, @"count: %@", count);
+    }
 }
 
 @end
