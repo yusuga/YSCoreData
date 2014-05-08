@@ -22,11 +22,11 @@
 
 @class YSCoreDataOperation;
 
-typedef void(^YSCoreDataOperationAsyncWriteConfigure)(NSManagedObjectContext *context,
-                                                      YSCoreDataOperation *operation);
+typedef void(^YSCoreDataOperationWriteConfigure)(NSManagedObjectContext *context,
+                                                 YSCoreDataOperation *operation);
 
-typedef NSFetchRequest*(^YSCoreDataOperationAsyncFetchRequestConfigure)(NSManagedObjectContext *context,
-                                                                 YSCoreDataOperation *operation);
+typedef NSFetchRequest*(^YSCoreDataOperationFetchRequestConfigure)(NSManagedObjectContext *context,
+                                                                   YSCoreDataOperation *operation);
 
 typedef void(^YSCoreDataOperationCompletion)(NSManagedObjectContext *context, NSError *error);
 typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *context, NSArray *fetchResults, NSError *error);
@@ -40,33 +40,33 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
 
 // sync
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   error:(NSError**)errorPtr
-                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                      error:(NSError**)errorPtr;
 
-- (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                        error:(NSError**)errorPtr
-                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
+                                         error:(NSError**)errorPtr
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
                                          error:(NSError**)errorPtr
-                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 // async
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
-                               didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
-- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                  completion:(YSCoreDataOperationFetchCompletion)completion;
 
-- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                         completion:(YSCoreDataOperationCompletion)completion
-                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (void)cancel;
 @property (nonatomic, readonly) BOOL isCancelled;

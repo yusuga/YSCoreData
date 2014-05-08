@@ -42,9 +42,9 @@
 
 #pragma mark - write
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   error:(NSError**)errorPtr
-                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     if (configure == nil) {
         NSError *coreDataError = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
@@ -58,9 +58,9 @@
     return [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
 }
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
-                               didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     [self.temporaryContext performBlock:^{
         if (configure) {
@@ -83,13 +83,13 @@
         }
         
         [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
-                            didSaveSQLite:didSaveSQLite];
+                                                 didSaveSQLite:didSaveSQLite];
     }];
 }
 
 #pragma mark - fetch
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                      error:(NSError**)errorPtr
 {
     return [self excuteFetchWithContext:self.mainContext
@@ -97,7 +97,7 @@
                                   error:errorPtr];
 }
 
-- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                  completion:(YSCoreDataOperationFetchCompletion)completion
 {
     [self.temporaryContext performBlock:^{
@@ -170,9 +170,9 @@
 
 #pragma mark - remove
 
-- (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                         error:(NSError**)errorPtr
-                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                 didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     NSError *error = nil;
     if ([self removeObjectsWithConfigureFetchRequest:configure error:&error]) {
@@ -192,7 +192,7 @@
 
 - (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
                                          error:(NSError**)errorPtr
-                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     for (NSEntityDescription *entity in [managedObjectModel entities]) {
         NSError *error = nil;
@@ -214,7 +214,7 @@
     return YES;
 }
 
-- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                          error:(NSError**)errorPtr
 {
     NSError *error = nil;
@@ -231,9 +231,9 @@
     return YES;
 }
 
-- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                         completion:(YSCoreDataOperationCompletion)completion
-                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
@@ -269,14 +269,14 @@
         }
         
         [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
-                            didSaveSQLite:didSaveSQLite];
+                                                 didSaveSQLite:didSaveSQLite];
     }];
 }
 
 #pragma mark - excute
 
 - (NSArray*)excuteFetchWithContext:(NSManagedObjectContext*)context
-             configureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+             configureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                              error:(NSError**)error
 {
     NSFetchRequest *req;
@@ -342,7 +342,7 @@
 }
 
 - (void)asyncSaveTemporaryContextWithDidMergeMainContext:(YSCoreDataOperationCompletion)didMergeMainContext
-                      didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                           didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     /*
      temporaryContextの-performBlock:から呼び出されることを前提としている

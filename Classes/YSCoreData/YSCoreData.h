@@ -35,19 +35,19 @@ typedef enum {
 
 // sync
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                                  error:(NSError **)error
-                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
+                                  error:(NSError **)errorPtr
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                     error:(NSError **)error;
+- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
+                                     error:(NSError **)errorPtr;
 
-- (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                        error:(NSError **)error
-                                didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
+                                         error:(NSError **)errorPtr
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
-                    didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                     didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 - (NSDictionary*)countAllEntitiesByName;
@@ -56,15 +56,15 @@ typedef enum {
 
 // async
 
-- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
+- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                                   completion:(YSCoreDataOperationCompletion)completion
-                                               didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
-- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                                  completion:(YSCoreDataOperationFetchCompletion)completion;
 
-- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                                         completion:(YSCoreDataOperationCompletion)completion
-                                                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 @end
