@@ -47,6 +47,7 @@ typedef enum {
                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
+- (NSDictionary*)countAllEntitiesByName;
 
 // async
 

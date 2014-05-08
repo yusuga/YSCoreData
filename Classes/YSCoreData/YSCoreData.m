@@ -200,6 +200,16 @@
     return [self countRecordWithContext:self.mainContext entitiyName:entityName];
 }
 
+- (NSDictionary*)countAllEntitiesByName
+{
+    NSDictionary *allEntities = [self.managedObjectModel entitiesByName];
+    NSMutableDictionary *countAllEntities = [NSMutableDictionary dictionaryWithCapacity:[allEntities count]];
+    for (NSString *entityName in [allEntities allKeys]) {
+        [countAllEntities setObject:@([self countRecordWithEntitiyName:entityName]) forKey:entityName];
+    }
+    return countAllEntities;
+}
+
 - (NSUInteger)countRecordWithContext:(NSManagedObjectContext*)context entitiyName:(NSString*)entityName
 {
     NSFetchRequest* req = [[NSFetchRequest alloc] init];
