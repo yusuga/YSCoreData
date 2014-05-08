@@ -15,6 +15,7 @@
 @property (nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (nonatomic, copy) NSString *modelName;
 @property (nonatomic) NSManagedObjectContext *privateWriterContext;
+@property (nonatomic) NSString *storeType;
 
 @property (nonatomic) NSString *databaseFullPath;
 
@@ -34,9 +35,18 @@
                          databasePath:(NSString *)databasePath
                             modelName:(NSString *)modelName
 {
+    return [self initWithDirectoryType:directoryType databasePath:databasePath modelName:modelName storeType:NSSQLiteStoreType];
+}
+
+- (instancetype)initWithDirectoryType:(YSCoreDataDirectoryType)directoryType
+                         databasePath:(NSString *)databasePath
+                            modelName:(NSString *)modelName
+                            storeType:(NSString *)storeType
+{
     if (self = [super init]) {
         self.databaseFullPath = [self databaseFullPathWithDirectoryType:directoryType databasePath:databasePath];
         self.modelName = modelName;
+        self.storeType = storeType;
         [self privateWriterContext]; // setup
     }
     return self;
@@ -211,7 +221,7 @@
         NSURL *url = [NSURL fileURLWithPath:self.databaseFullPath];
         NSError *error = nil;
         _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:self.managedObjectModel];
-        if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:url options:nil error:&error]) {
+        if (![_persistentStoreCoordinator addPersistentStoreWithType:self.storeType configuration:nil URL:url options:nil error:&error]) {
             NSAssert1(0, @"NSPersistentStoreCoordinator error: %@", error);
             NSLog(@"NSPersistentStoreCoordinator error: %@", error);
         }
