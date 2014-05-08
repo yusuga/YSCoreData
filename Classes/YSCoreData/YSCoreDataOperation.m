@@ -74,7 +74,6 @@
                 return ;
             }
         } else {
-            NSAssert(0, @"Error: asyncWrite; setting == nil");
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) completion(self.temporaryContext,
                                            [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"]);
@@ -239,7 +238,6 @@
         
         if (req == nil) {
             NSString *desc = @"Fetch request is nil";
-            NSAssert(0, desc);
             if (error != NULL) {
                 *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
             }
@@ -247,7 +245,6 @@
         }
     } else {
         NSString *desc = @"Fetch configure is nil";
-        NSAssert(0, desc);
         if (error != NULL) {
             *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
         }
