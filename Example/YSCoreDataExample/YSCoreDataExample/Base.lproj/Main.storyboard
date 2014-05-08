@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="4514" systemVersion="13B42" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="rnP-rb-4j8">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="5056" systemVersion="13C1021" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" initialViewController="rnP-rb-4j8">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3747"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="3733"/>
     </dependencies>
     <scenes>
         <!--Top View Controller - YSCoreDataExample-->
@@ -71,17 +71,13 @@
                         </connections>
                     </tableView>
                     <toolbarItems>
-                        <barButtonItem title="Remove tweet" id="KFI-GD-xzG">
+                        <barButtonItem style="plain" systemItem="flexibleSpace" id="Nqw-qp-G4Q"/>
+                        <barButtonItem title="Other operation" id="1u3-JT-nLo">
                             <connections>
-                                <action selector="removeTweetButtonDidPush:" destination="qx3-9X-N4G" id="Mrc-DP-M39"/>
+                                <action selector="otherOperationButtonDidPush:" destination="qx3-9X-N4G" id="BGW-B4-o0R"/>
                             </connections>
                         </barButtonItem>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="WTl-9k-IMs"/>
-                        <barButtonItem title="Delete database" id="M9d-R1-uYq">
-                            <connections>
-                                <action selector="deleteDatabaseButtonDidPush:" destination="qx3-9X-N4G" id="Y4o-nS-neX"/>
-                            </connections>
-                        </barButtonItem>
                     </toolbarItems>
                     <navigationItem key="navigationItem" title="YSCoreDataExample" id="44a-Yc-sYV"/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>

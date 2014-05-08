@@ -9,6 +9,7 @@
 #import "TopViewController.h"
 #import "TwitterStorage.h"
 #import "TwitterRequest.h"
+#import <UIActionSheet+Blocks/UIActionSheet+Blocks.h>
 
 @interface TopViewController ()
 
@@ -32,7 +33,56 @@
 
 #pragma mark - Button action
 
-- (IBAction)removeTweetButtonDidPush:(id)sender
+- (IBAction)otherOperationButtonDidPush:(id)sender
+{
+    [UIActionSheet showInView:self.view
+                    withTitle:@"Other operation"
+            cancelButtonTitle:@"Cancel"
+       destructiveButtonTitle:nil
+            otherButtonTitles:@[@"count all objects",
+                                @"remove tweets",
+                                @"remove all objects",
+                                @"delete database"]
+                     tapBlock:^(UIActionSheet *actionSheet, NSInteger buttonIndex)
+     {
+         if (buttonIndex == actionSheet.cancelButtonIndex) {
+             return ;
+         }
+         TwitterStorage *storage = [TwitterStorage sharedInstance];
+         switch (buttonIndex) {
+             case 0:
+                 NSLog(@"%@", [storage countAllEntitiesByName]);
+                 break;
+             case 1:
+                 [self removeTweets];
+                 break;
+             case 2:
+             {
+                 NSError *error = nil;
+                 BOOL success = [storage removeAllObjectsWithError:&error didSaveSQLite:^(NSManagedObjectContext *context, NSError *error)
+                 {
+                     if (error) {
+                         [[[UIAlertView alloc] initWithTitle:@"Error: removeAllObjects"
+                                                     message:[error description]
+                                                    delegate:nil
+                                           cancelButtonTitle:@"OK"
+                                           otherButtonTitles:nil] show];
+                     }
+                 }];
+                 NSLog(@"removeAllObjects: %@", success ? @"success" : @"failure");
+                 break;
+             }
+             case 3:
+                 [self deleteDatabase];
+                 break;
+             default:
+                 NSAssert1(0, @"Unknown index: %@", @(buttonIndex));
+                 break;
+         }
+     }];
+}
+
+- (void)removeTweets
 {
     NSLog(@"%s", __func__);
     TwitterStorage *ts = [TwitterStorage sharedInstance];
@@ -49,13 +99,17 @@
     } didSaveSQLite:nil];
 }
 
-- (IBAction)deleteDatabaseButtonDidPush:(id)sender
+- (IBAction)deleteDatabase
 {
-    [[TwitterStorage sharedInstance] deleteDatabase];
+    BOOL success = [[TwitterStorage sharedInstance] deleteDatabase];
     [TwitterRequest resetState];
     [self removeFetchedResultsControllerCache];
     
-    [[[UIAlertView alloc] initWithTitle:@"データベースを削除しました" message:nil delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
+    [[[UIAlertView alloc] initWithTitle:success ? @"データベースを削除しました" : @"Error"
+                                message:success ? nil : @"database was not deleted."
+                               delegate:nil
+                      cancelButtonTitle:@"OK"
+                      otherButtonTitles:nil] show];
 }
 
 #pragma mark -
