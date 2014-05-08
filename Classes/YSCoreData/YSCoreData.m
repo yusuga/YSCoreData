@@ -178,6 +178,23 @@
     return [ope removeRecordWithConfigureFetchRequest:configure error:error didSaveSQLite:didSaveSQLite];
 }
 
+- (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
+                    didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+{
+    for (NSEntityDescription *entity in [self.managedObjectModel entities]) {
+        BOOL success = [self removeRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation)
+                        {
+                            NSFetchRequest *req = [[NSFetchRequest alloc] init];
+                            req.entity = entity;
+                            return req;
+                        } error:errorPtr didSaveSQLite:didSaveSQLite];
+        if (!success || (errorPtr != NULL && *errorPtr)) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                                         completion:(YSCoreDataOperationCompletion)completion
                                                      didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite

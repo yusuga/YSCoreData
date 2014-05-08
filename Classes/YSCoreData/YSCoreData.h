@@ -46,8 +46,13 @@ typedef enum {
                                         error:(NSError **)error
                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
+- (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
+                    didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 - (NSDictionary*)countAllEntitiesByName;
+
+- (BOOL)deleteDatabase;
 
 // async
 
@@ -61,7 +66,5 @@ typedef enum {
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
                                                         completion:(YSCoreDataOperationCompletion)completion
                                                      didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
-
-- (BOOL)deleteDatabase;
 
 @end
