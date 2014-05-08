@@ -41,14 +41,14 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
 // sync
 
 - (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                                  error:(NSError**)error
+                                  error:(NSError**)errorPtr
                           didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 - (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                     error:(NSError**)error;
+                                     error:(NSError**)errorPtr;
 
 - (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                        error:(NSError**)error
+                                        error:(NSError**)errorPtr
                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
 // async

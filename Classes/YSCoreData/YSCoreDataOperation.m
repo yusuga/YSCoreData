@@ -43,18 +43,18 @@
 #pragma mark - write
 
 - (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
-                                  error:(NSError**)error
+                                  error:(NSError**)errorPtr
                           didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
     if (configure == nil) {
         NSError *coreDataError = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
-        if (error != NULL) {
-            *error = coreDataError;
+        if (errorPtr != NULL) {
+            *errorPtr = coreDataError;
         }
         return NO;
     }
     configure(self.mainContext, self);
-    return [self save:error didSaveSQLite:didSaveSQLite];
+    return [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
 }
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
@@ -89,11 +89,11 @@
 #pragma mark - fetch
 
 - (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                     error:(NSError**)error
+                                     error:(NSError**)errorPtr
 {
     return [self excuteFetchWithContext:self.mainContext
                   configureFetchRequest:configure
-                                  error:error];
+                                  error:errorPtr];
 }
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
@@ -170,17 +170,17 @@
 #pragma mark - remove
 
 - (BOOL)removeRecordWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
-                                        error:(NSError**)error
+                                        error:(NSError**)errorPtr
                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
-    NSArray *results = [self excuteFetchWithContext:self.mainContext configureFetchRequest:configure error:error];
-    if (error != NULL && *error) {
+    NSArray *results = [self excuteFetchWithContext:self.mainContext configureFetchRequest:configure error:errorPtr];
+    if (errorPtr != NULL && *errorPtr) {
         return NO;
     }
     for (NSManagedObject *obj in results) {
         [self.mainContext deleteObject:obj];
     }
-    [self save:error didSaveSQLite:didSaveSQLite];
+    [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
     return YES;
 }
 
@@ -279,10 +279,10 @@
 
 #pragma mark - save
 
-- (BOOL)save:(NSError**)error didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+- (BOOL)saveMainContextWithSave:(NSError**)errorPtr didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
-    [self.mainContext save:error];
-    if (error != NULL && *error) {
+    [self.mainContext save:errorPtr];
+    if (errorPtr != NULL && *errorPtr) {
         return NO;
     }
     [self asyncSavePrivateWriterContextWithDidSaveSQLite:didSaveSQLite];
