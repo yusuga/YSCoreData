@@ -9,7 +9,7 @@
 #import <XCTest/XCTest.h>
 #import "TwitterStorage.h"
 #import "TwitterRequest.h"
-#import "TestUtility.h"
+#import "Utility.h"
 #import <TKRGuard/TKRGuard.h>
 
 @interface SyncTests : XCTestCase
@@ -21,7 +21,8 @@
 - (void)setUp
 {
     [super setUp];
-    [TestUtility cleanUpAllDatabase];
+    [Utility commonSettins];
+    [Utility cleanUpAllDatabase];
 }
 
 - (void)tearDown
@@ -30,14 +31,26 @@
     [super tearDown];
 }
 
-- (void)testAllOperationInTwitterStorage
+#pragma mark - all operations
+
+- (void)testAllOperationInTwitterStorageWithSQLite
 {
-    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageWithStoreType:NSSQLiteStoreType]];
+    [self databaseTestWithTwitterStorage:[Utility twitterStorageWithStoreType:NSSQLiteStoreType]];
+}
+
+- (void)testAllOperationInTwitterStorageWithBinary
+{
+    [self databaseTestWithTwitterStorage:[Utility twitterStorageWithStoreType:NSBinaryStoreType]];
+}
+
+- (void)testAllOperationInTwitterStorageWithInMemory
+{
+    [self databaseTestWithTwitterStorage:[Utility twitterStorageWithStoreType:NSInMemoryStoreType]];
 }
 
 - (void)testAllOperationInTwitterStorageOfMainBundle
 {
-    [self databaseTestWithTwitterStorage:[TestUtility twitterStorageOfMainBundleWithStoreType:NSSQLiteStoreType]];
+    [self databaseTestWithTwitterStorage:[Utility twitterStorageOfMainBundle]];
 }
 
 - (void)databaseTestWithTwitterStorage:(TwitterStorage*)twitterStorage

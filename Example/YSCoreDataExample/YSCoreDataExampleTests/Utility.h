@@ -1,5 +1,5 @@
 //
-//  TestUtility.h
+//  Utility.h
 //  YSCoreDataExample
 //
 //  Created by Yu Sugawara on 2014/05/06.
@@ -9,15 +9,19 @@
 #import <Foundation/Foundation.h>
 #import "TwitterStorage.h"
 
-extern NSString * const kCoreDataPath;
-extern NSString * const kTwitterStoragePath;
+extern NSString * const kTwitterStorageOfMainBundlePath;
 
-@interface TestUtility : NSObject
+@interface Utility : NSObject
 
 + (YSCoreData*)coreDataWithStoreType:(NSString*)storeType;
 + (TwitterStorage*)twitterStorageWithStoreType:(NSString*)storeType;
-+ (TwitterStorage*)twitterStorageOfMainBundleWithStoreType:(NSString*)storeType;
++ (TwitterStorage*)twitterStorageOfMainBundle;
+
++ (NSString*)coreDataPathWithStoreType:(NSString*)storeType;
++ (NSString*)twitterStoragePathWithStoreType:(NSString*)storeType;
 
 + (void)cleanUpAllDatabase;
+
++ (void)commonSettins;
 
 @end

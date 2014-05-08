@@ -15,7 +15,7 @@
 		B8251D0718B26B580062F6D5 /* TwitterRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0618B26B580062F6D5 /* TwitterRequest.m */; };
 		B8251D0A18B2769C0062F6D5 /* TopViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B8251D0918B2769C0062F6D5 /* TopViewController.m */; };
 		B84DE4871918E3070049A259 /* SyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE4861918E3070049A259 /* SyncTests.m */; };
-		B84DE48A1918E3870049A259 /* TestUtility.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE4891918E3870049A259 /* TestUtility.m */; };
+		B84DE48A1918E3870049A259 /* Utility.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE4891918E3870049A259 /* Utility.m */; };
 		B84DE48F1918E7610049A259 /* UtilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B84DE48E1918E7610049A259 /* UtilityTests.m */; };
 		B854F54318AC84260070727A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54218AC84260070727A /* Foundation.framework */; };
 		B854F54518AC84260070727A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B854F54418AC84260070727A /* CoreGraphics.framework */; };
@@ -67,8 +67,8 @@
 		B8251D0818B2769C0062F6D5 /* TopViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TopViewController.h; sourceTree = "<group>"; };
 		B8251D0918B2769C0062F6D5 /* TopViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TopViewController.m; sourceTree = "<group>"; };
 		B84DE4861918E3070049A259 /* SyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SyncTests.m; sourceTree = "<group>"; };
-		B84DE4881918E3870049A259 /* TestUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestUtility.h; sourceTree = "<group>"; };
-		B84DE4891918E3870049A259 /* TestUtility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestUtility.m; sourceTree = "<group>"; };
+		B84DE4881918E3870049A259 /* Utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utility.h; sourceTree = "<group>"; };
+		B84DE4891918E3870049A259 /* Utility.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Utility.m; sourceTree = "<group>"; };
 		B84DE48E1918E7610049A259 /* UtilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UtilityTests.m; sourceTree = "<group>"; };
 		B854F53F18AC84260070727A /* YSCoreDataExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YSCoreDataExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B854F54218AC84260070727A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -145,8 +145,8 @@
 		B84DE48B1918E3980049A259 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
-				B84DE4881918E3870049A259 /* TestUtility.h */,
-				B84DE4891918E3870049A259 /* TestUtility.m */,
+				B84DE4881918E3870049A259 /* Utility.h */,
+				B84DE4891918E3870049A259 /* Utility.m */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -422,7 +422,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B84DE48F1918E7610049A259 /* UtilityTests.m in Sources */,
-				B84DE48A1918E3870049A259 /* TestUtility.m in Sources */,
+				B84DE48A1918E3870049A259 /* Utility.m in Sources */,
 				B84DE4871918E3070049A259 /* SyncTests.m in Sources */,
 				B854F56E18AC84260070727A /* AsyncTests.m in Sources */,
 			);

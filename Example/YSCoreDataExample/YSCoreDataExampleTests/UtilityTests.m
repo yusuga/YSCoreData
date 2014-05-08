@@ -7,7 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
-#import "TestUtility.h"
+#import "Utility.h"
 #import <YSFileManager/YSFileManager.h>
 
 @interface UtilityTests : XCTestCase
@@ -19,49 +19,65 @@
 - (void)setUp
 {
     [super setUp];
-    [TestUtility cleanUpAllDatabase];
+    [Utility commonSettins];
+    [Utility cleanUpAllDatabase];
 }
 
-- (NSString*)coreDataPath
+- (NSString*)coreDataPathWithStoreType:(NSString*)storeType
 {
-    return [YSFileManager documentDirectoryWithAppendingPathComponent:kCoreDataPath];
+    return [YSFileManager documentDirectoryWithAppendingPathComponent:[Utility coreDataPathWithStoreType:storeType]];
 }
 
-- (NSString*)twitterStoragePath
+- (NSString*)twitterStoragePathWithStoreType:(NSString*)storeType
 {
-    return [YSFileManager documentDirectoryWithAppendingPathComponent:kTwitterStoragePath];
+    return [YSFileManager documentDirectoryWithAppendingPathComponent:[Utility twitterStoragePathWithStoreType:storeType]];
 }
 
 - (NSString*)twitterStorageOfMainBundlePath
 {
-    return [[NSBundle mainBundle] pathForResource:kTwitterStoragePath ofType:nil];
+    return [[NSBundle mainBundle] pathForResource:kTwitterStorageOfMainBundlePath ofType:nil];
 }
 
 - (void)testCleanUpAllDatabase
 {
-    [TestUtility cleanUpAllDatabase];
-    XCTAssertFalse([YSFileManager fileExistsAtPath:[self coreDataPath]]);
-    XCTAssertFalse([YSFileManager fileExistsAtPath:[self twitterStoragePath]]);
+    [Utility cleanUpAllDatabase];
+    XCTAssertFalse([YSFileManager fileExistsAtPath:[self coreDataPathWithStoreType:NSSQLiteStoreType]]);
+    XCTAssertFalse([YSFileManager fileExistsAtPath:[self coreDataPathWithStoreType:NSBinaryStoreType]]);
+    XCTAssertFalse([YSFileManager fileExistsAtPath:[self twitterStoragePathWithStoreType:NSSQLiteStoreType]]);
+    XCTAssertFalse([YSFileManager fileExistsAtPath:[self twitterStoragePathWithStoreType:NSBinaryStoreType]]);
+    
     XCTAssertTrue([YSFileManager fileExistsAtPath:[self twitterStorageOfMainBundlePath]]);
+    
+    for (YSCoreData *coreData in @[[Utility twitterStorageOfMainBundle],
+                                   [Utility coreDataWithStoreType:NSInMemoryStoreType],
+                                   [Utility twitterStorageWithStoreType:NSInMemoryStoreType]])
+    {
+        for (NSNumber *count in [[coreData countAllEntitiesByName] allValues]) {
+            XCTAssertTrue(count.integerValue == 0, @"count: %@", count);
+        }
+    }
 }
 
 - (void)testCreateCoreData
 {
-    XCTAssertNotNil([TestUtility coreDataWithStoreType:NSSQLiteStoreType]);
-    XCTAssertTrue([YSFileManager fileExistsAtPath:[self coreDataPath]]);
+    for (NSString *storeType in @[NSSQLiteStoreType, NSBinaryStoreType]) {
+        XCTAssertNotNil([Utility coreDataWithStoreType:storeType]);
+        XCTAssertTrue([YSFileManager fileExistsAtPath:[self coreDataPathWithStoreType:storeType]]);
+    }
 }
 
 - (void)testCreateTwitterStorage
 {
-    XCTAssertNotNil([TestUtility twitterStorageWithStoreType:NSSQLiteStoreType]);
-    XCTAssertTrue([YSFileManager fileExistsAtPath:[self twitterStoragePath]]);
+    for (NSString *storeType in @[NSSQLiteStoreType, NSBinaryStoreType]) {
+        XCTAssertNotNil([Utility twitterStorageWithStoreType:storeType]);
+        XCTAssertTrue([YSFileManager fileExistsAtPath:[self twitterStoragePathWithStoreType:storeType]]);
+    }
 }
 
 - (void)testExistsTwitterStorageOfMainBundle
 {
-    XCTAssertNotNil([TestUtility twitterStorageOfMainBundleWithStoreType:NSSQLiteStoreType]);
+    XCTAssertNotNil([Utility twitterStorageOfMainBundle]);
     XCTAssertTrue([YSFileManager fileExistsAtPath:[self twitterStorageOfMainBundlePath]]);
 }
-
 
 @end
