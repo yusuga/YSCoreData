@@ -104,7 +104,7 @@
     
     // remove all objects
     error = nil;
-    XCTAssertTrue([twitterStorage removeAllObjectsWithError:&error didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
+    XCTAssertTrue([twitterStorage removeAllObjectsWithError:&error didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
         if (error) {
             XCTFail(@"%@", error);
         }

@@ -61,7 +61,7 @@
          XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
          XCTAssertTrue(error.code == YSCoreDataErrorCodeCancel, @"code = %@;", @(error.code));
          RESUME;
-     } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
+     } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
          XCTFail();
      }];
     WAIT;
