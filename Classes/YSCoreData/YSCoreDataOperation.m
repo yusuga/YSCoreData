@@ -51,6 +51,7 @@
         if (errorPtr != NULL) {
             *errorPtr = coreDataError;
         }
+        if (didSaveSQLite) didSaveSQLite(self.mainContext, coreDataError);
         return NO;
     }
     configure(self.mainContext, self);
@@ -173,14 +174,60 @@
                                         error:(NSError**)errorPtr
                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
-    NSArray *results = [self excuteFetchWithContext:self.mainContext configureFetchRequest:configure error:errorPtr];
-    if (errorPtr != NULL && *errorPtr) {
+    NSError *error = nil;
+    if ([self removeObjectsWithConfigureFetchRequest:configure error:&error]) {
+        [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
+        return YES;
+    } else {
+        if (errorPtr != NULL) {
+            *errorPtr = error;
+        }
+        if (didSaveSQLite) {
+            didSaveSQLite(self.mainContext, error);
+        }
+        return NO;
+    }
+    return YES;
+}
+
+- (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
+                                         error:(NSError**)errorPtr
+                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+{
+    for (NSEntityDescription *entity in [managedObjectModel entities]) {
+        NSError *error = nil;
+        BOOL success = [self removeObjectsWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+            NSFetchRequest *req = [[NSFetchRequest alloc] init];
+            req.entity = entity;
+            return req;
+        } error:&error];
+        
+        if (!success) {
+            if (error && errorPtr != NULL) {
+                *errorPtr = error;
+            }
+            if (didSaveSQLite) didSaveSQLite(self.mainContext, error);
+            return NO;
+        }
+    }
+    [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
+    return YES;
+}
+
+- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationAsyncFetchRequestConfigure)configure
+                                         error:(NSError**)errorPtr
+{
+    NSError *error = nil;
+    NSArray *results = [self excuteFetchWithContext:self.mainContext configureFetchRequest:configure error:&error];
+    if (error) {
+        if (errorPtr != NULL) {
+            *errorPtr = error;
+        }
         return NO;
     }
     for (NSManagedObject *obj in results) {
         [self.mainContext deleteObject:obj];
     }
-    [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
     return YES;
 }
 
@@ -281,8 +328,13 @@
 
 - (BOOL)saveMainContextWithSave:(NSError**)errorPtr didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
 {
-    [self.mainContext save:errorPtr];
-    if (errorPtr != NULL && *errorPtr) {
+    NSError *error = nil;
+    [self.mainContext save:&error];
+    if (error) {
+        if (errorPtr != NULL) {
+            *errorPtr = error;
+        }
+        if (didSaveSQLite) didSaveSQLite(self.mainContext, error);
         return NO;
     }
     [self asyncSavePrivateWriterContextWithDidSaveSQLite:didSaveSQLite];

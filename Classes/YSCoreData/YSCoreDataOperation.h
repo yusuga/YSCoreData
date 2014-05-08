@@ -51,6 +51,10 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
                                         error:(NSError**)errorPtr
                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
 
+- (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
+                                         error:(NSError**)errorPtr
+                                 didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite;
+
 // async
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationAsyncWriteConfigure)configure
