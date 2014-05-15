@@ -46,24 +46,4 @@ NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
     return [self errorWithCode:YSCoreDataErrorCodeRequiredArgumentIsNil description:description];
 }
 
-+ (NSError *)saveErrorWithType:(YSCoreDataErrorSaveType)saveType
-{
-    NSString *desc;
-    switch (saveType) {
-        case YSCoreDataErrorSaveTypeTemporaryContext:
-            desc = @"Save failed for temporary context.";
-            break;
-        case YSCoreDataErrorSaveTypeMainContext:
-            desc = @"Save failed for main context.";
-            break;
-        case YSCoreDataErrorSaveTypePrivateWriterContext:
-            desc = @"Save failed for privateWriter context.";
-            break;
-        default:
-            desc = @"Save failed for Unknown context.";
-            break;
-    }
-    return [self errorWithCode:YSCoreDataErrorCodeSave description:desc];
-}
-
 @end

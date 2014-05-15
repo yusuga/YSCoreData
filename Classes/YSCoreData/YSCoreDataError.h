@@ -24,16 +24,9 @@ typedef enum {
     YSCoreDataErrorOperationTypeRemove,
 } YSCoreDataErrorOperationType;
 
-typedef enum {
-    YSCoreDataErrorSaveTypeTemporaryContext,
-    YSCoreDataErrorSaveTypeMainContext,
-    YSCoreDataErrorSaveTypePrivateWriterContext,
-} YSCoreDataErrorSaveType;
-
 @interface YSCoreDataError : NSObject
 
 + (NSError*)cancelErrorWithType:(YSCoreDataErrorOperationType)operationType;
 + (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description;
-+ (NSError*)saveErrorWithType:(YSCoreDataErrorSaveType)saveType;
 
 @end
