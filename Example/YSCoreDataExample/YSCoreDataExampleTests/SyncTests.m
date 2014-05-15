@@ -61,7 +61,7 @@
     // insert 100
     [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
         NSError *error = nil;
-        XCTAssertTrue([twitterStorage insertTweetsWithTweetJsons:newTweets error:nil didSaveSQLite:^(NSManagedObjectContext *context, NSError *error)
+        XCTAssertTrue([twitterStorage insertTweetsWithTweetJsons:newTweets error:nil didSaveStore:^(NSManagedObjectContext *context, NSError *error)
                          {
                              if (error) {
                                  XCTFail(@"error: %@", error);

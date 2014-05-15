@@ -68,7 +68,7 @@
         // 取得したツイートをCoreDataに保存
         wself.insertOperation = [[TwitterStorage sharedInstance] asyncInsertTweetsWithTweetJsons:newTweets
                                                                                       completion:nil
-                                                                                   didSaveSQLite:nil];
+                                                                                    didSaveStore:nil];
     }];
 }
 

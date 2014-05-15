@@ -62,9 +62,10 @@
          XCTAssertTrue(error.code == YSCoreDataErrorCodeCancel, @"code = %@;", @(error.code));
          RESUME;
      } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
-         XCTFail();
+         XCTAssertNotNil(error, @"error: %@", error);
+         RESUME;
      }];
-    WAIT;
+    WAIT_TIMES(2);
 }
 
 #pragma mark - cancel fetch
@@ -135,7 +136,7 @@
                 XCTFail(@"%@", error);
             }
             RESUME;
-        } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
+        } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
             XCTAssertTrue([twitterStorage countTweetRecord] == insertCount, @"count = %@", @([twitterStorage countTweetRecord]));
             RESUME;
         }];
@@ -178,7 +179,7 @@
             XCTFail(@"%@", error);
         }
         RESUME;
-    } didSaveSQLite:^(NSManagedObjectContext *context, NSError *error) {
+    } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
         XCTAssertTrue([twitterStorage countTweetRecord] == 0, @"count = %@", @([twitterStorage countTweetRecord]));
         RESUME;
     }];

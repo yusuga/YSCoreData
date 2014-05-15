@@ -26,16 +26,16 @@
 
 - (BOOL)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
                              error:(NSError**)error
-                     didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                     didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     return [self writeWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         [self insertTweetsWithContext:context operation:operation tweetJsons:tweetJsons];
-    } error:error didSaveStore:didSaveSQLite];
+    } error:error didSaveStore:didSaveStore];
 }
 
 - (YSCoreDataOperation*)asyncInsertTweetsWithTweetJsons:(NSArray*)tweetJsons
                                              completion:(YSCoreDataOperationCompletion)completion
-                                          didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                          didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     if (![tweetJsons isKindOfClass:[NSArray class]]) {
         NSAssert1(0, @"%s; tweetJsons is not NSArray class;", __func__);
@@ -47,7 +47,7 @@
                                                         YSCoreDataOperation *operation)
             {
                 [self insertTweetsWithContext:context operation:operation tweetJsons:tweetJsons];
-            } completion:completion didSaveStore:didSaveSQLite];
+            } completion:completion didSaveStore:didSaveStore];
 }
 
 - (void)insertTweetsWithContext:(NSManagedObjectContext*)context
@@ -71,7 +71,7 @@
         NSArray *tweetsResults = [context executeFetchRequest:tweetsReq error:&error];
         if ([((NSNumber*)[tweetsResults firstObject]) integerValue] > 0) {
             // 重複したTweetは保存しない
-            NSLog(@"Saved tweet %@", tweetId);
+            NSLog(@"Saved tweet %@ (%p)", tweetId, context);
             continue;
         }
         
@@ -96,9 +96,9 @@
         
         // 同一IDのUser(保存してたUser)があればUpdate。なければ新規のUesrをInsert
         if (user) {
-            NSLog(@"User update %@", userId);
+            NSLog(@"User update %@ (%p)", userId, context);
         } else {
-            NSLog(@"User insert %@", userId);
+            NSLog(@"User insert %@ (%p)", userId, context);
             // 新しいUserを作成
             user = (id)[NSEntityDescription insertNewObjectForEntityForName:@"User"
                                                      inManagedObjectContext:tweet.managedObjectContext];
@@ -156,22 +156,22 @@
 #pragma mark - remove
 
 - (BOOL)removeAllTweetRecordWithError:(NSError**)error
-                        didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                        didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     return [self removeObjectsWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation)
             {
                 return [self removeAllTweetRecordRequestWithContext:context];
-            } error:error didSaveStore:didSaveSQLite];
+            } error:error didSaveStore:didSaveStore];
 }
 
 - (YSCoreDataOperation*)asyncRemoveAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
-                                                  didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     return [self asyncRemoveRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                               YSCoreDataOperation *operation)
             {
                 return [self removeAllTweetRecordRequestWithContext:context];
-            } completion:completion didSaveStore:didSaveSQLite];
+            } completion:completion didSaveStore:didSaveStore];
 }
 
 - (NSFetchRequest*)removeAllTweetRecordRequestWithContext:(NSManagedObjectContext*)context

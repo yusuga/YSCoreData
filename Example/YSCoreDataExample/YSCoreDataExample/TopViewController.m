@@ -96,7 +96,7 @@
         [wself removeFetchedResultsControllerCache];
         NSLog(@">count Tweet = %@", @([ts countTweetRecord]));
         NSLog(@">count User = %@", @([ts countUserRecord]));
-    } didSaveSQLite:nil];
+    } didSaveStore:nil];
 }
 
 - (IBAction)deleteDatabase
