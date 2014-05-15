@@ -47,23 +47,23 @@
 
 - (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   error:(NSError**)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     if (configure == nil) {
         NSError *coreDataError = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
         if (errorPtr != NULL) {
             *errorPtr = coreDataError;
         }
-        if (didSaveSQLite) didSaveSQLite(self.mainContext, coreDataError);
+        if (didSaveStore) didSaveStore(self.mainContext, coreDataError);
         return NO;
     }
     configure(self.mainContext, self);
-    return [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
+    return [self saveMainContextWithSave:errorPtr didSaveStore:didSaveStore];
 }
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
-                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     [self.temporaryContext performBlock:^{
         if (configure) {
@@ -75,7 +75,7 @@
                     NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
                     if (completion) completion(self.temporaryContext, error);
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        if (didSaveSQLite) didSaveSQLite(self.temporaryContext, error);
+                        if (didSaveStore) didSaveStore(self.temporaryContext, error);
                     });
                 });
                 return ;
@@ -85,14 +85,14 @@
                 NSError *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
                 if (completion) completion(self.temporaryContext, error);
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveSQLite) didSaveSQLite(self.temporaryContext, error);
+                    if (didSaveStore) didSaveStore(self.temporaryContext, error);
                 });
             });
             return ;
         }
         
         [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
-                                                 didSaveSQLite:didSaveSQLite];
+                                                  didSaveStore:didSaveStore];
     }];
 }
 
@@ -180,23 +180,23 @@
 #pragma mark - remove
 
 - (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                        error:(NSError**)errorPtr
-                                 didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                         error:(NSError**)errorPtr
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     NSError *error = nil;
     if ([self removeObjectsWithConfigureFetchRequest:configure error:&error]) {
-        [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
+        [self saveMainContextWithSave:errorPtr didSaveStore:didSaveStore];
         return YES;
     } else {
         if (errorPtr != NULL) *errorPtr = error;
-        if (didSaveSQLite) didSaveSQLite(self.mainContext, error);
+        if (didSaveStore) didSaveStore(self.mainContext, error);
         return NO;
     }
 }
 
 - (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
                                          error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     for (NSEntityDescription *entity in [managedObjectModel entities]) {
         NSError *error = nil;
@@ -211,11 +211,11 @@
             if (error && errorPtr != NULL) {
                 *errorPtr = error;
             }
-            if (didSaveSQLite) didSaveSQLite(self.mainContext, error);
+            if (didSaveStore) didSaveStore(self.mainContext, error);
             return NO;
         }
     }
-    [self saveMainContextWithSave:errorPtr didSaveSQLite:didSaveSQLite];
+    [self saveMainContextWithSave:errorPtr didSaveStore:didSaveStore];
     return YES;
 }
 
@@ -238,7 +238,7 @@
 
 - (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                         completion:(YSCoreDataOperationCompletion)completion
-                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
@@ -249,7 +249,7 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) completion(self.temporaryContext, error);
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveSQLite) didSaveSQLite(self.temporaryContext, error);
+                    if (didSaveStore) didSaveStore(self.temporaryContext, error);
                 });
             });
             return;
@@ -260,7 +260,7 @@
                 LOG_YSCORE_DATA(@"Fetch result is none");
                 if (completion) completion(self.temporaryContext, nil);
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveSQLite) didSaveSQLite(self.temporaryContext, nil);
+                    if (didSaveStore) didSaveStore(self.temporaryContext, nil);
                 });
             });
             return;
@@ -276,14 +276,14 @@
                 NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
                 if (completion) completion(self.temporaryContext, error);
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveSQLite) didSaveSQLite(self.temporaryContext, error);
+                    if (didSaveStore) didSaveStore(self.temporaryContext, error);
                 });
             });
             return;
         }
         
         [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
-                                                 didSaveSQLite:didSaveSQLite];
+                                                  didSaveStore:didSaveStore];
     }];
 }
 
@@ -340,7 +340,7 @@
 
 #pragma mark - save
 
-- (BOOL)saveMainContextWithSave:(NSError**)errorPtr didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+- (BOOL)saveMainContextWithSave:(NSError**)errorPtr didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     NSError *error = nil;
     [self.mainContext save:&error];
@@ -348,15 +348,15 @@
         if (errorPtr != NULL) {
             *errorPtr = error;
         }
-        if (didSaveSQLite) didSaveSQLite(self.mainContext, error);
+        if (didSaveStore) didSaveStore(self.mainContext, error);
         return NO;
     }
-    [self asyncSavePrivateWriterContextWithDidSaveSQLite:didSaveSQLite];
+    [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
     return YES;
 }
 
 - (void)asyncSaveTemporaryContextWithDidMergeMainContext:(YSCoreDataOperationCompletion)didMergeMainContext
-                                           didSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+                                            didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     /*
      temporaryContextの-performBlock:から呼び出されることを前提としている
@@ -368,7 +368,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             if (didMergeMainContext) didMergeMainContext(self.mainContext, nil);
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (didSaveSQLite) didSaveSQLite(self.privateWriterContext, nil);
+                if (didSaveStore) didSaveStore(self.privateWriterContext, nil);
             });
         });
         return;
@@ -381,7 +381,7 @@
             NSLog(@"Error: temporaryContext save; error = %@;", error);
             if (didMergeMainContext) didMergeMainContext(self.temporaryContext, error);
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (didSaveSQLite) didSaveSQLite(self.temporaryContext, error);
+                if (didSaveStore) didSaveStore(self.temporaryContext, error);
             });
         });
         return;
@@ -392,29 +392,29 @@
         NSError *error = nil;
         if (![self.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
             NSLog(@"Error: mainContext save; error = %@;", error);
-            if (didSaveSQLite) didSaveSQLite(self.mainContext, error);
+            if (didSaveStore) didSaveStore(self.mainContext, error);
             return ;
         }
         LOG_YSCORE_DATA(@"Did save mainContext");
-        [self asyncSavePrivateWriterContextWithDidSaveSQLite:didSaveSQLite];
+        [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
     }];
 }
 
-- (void)asyncSavePrivateWriterContextWithDidSaveSQLite:(YSCoreDataOperationCompletion)didSaveSQLite
+- (void)asyncSavePrivateWriterContextWithdidSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     [self.privateWriterContext performBlock:^{
         NSError *error = nil;
         if (![self.privateWriterContext save:&error]) { // SQLiteへ保存
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                if (didSaveSQLite) didSaveSQLite(self.privateWriterContext, error);
+                if (didSaveStore) didSaveStore(self.privateWriterContext, error);
             });
             return ;
         }
         LOG_YSCORE_DATA(@"Did save privateWriterContext");
-        if (didSaveSQLite) {
+        if (didSaveStore) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                didSaveSQLite(self.privateWriterContext, nil);
+                didSaveStore(self.privateWriterContext, nil);
             });
         }
     }];

@@ -42,31 +42,31 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
 
 - (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   error:(NSError**)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                      error:(NSError**)errorPtr;
 
 - (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                          error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
                                          error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 // async
 
 - (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   completion:(YSCoreDataOperationCompletion)completion
-                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                  completion:(YSCoreDataOperationFetchCompletion)completion;
 
 - (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                         completion:(YSCoreDataOperationCompletion)completion
-                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (void)cancel;
 @property (nonatomic, readonly) BOOL isCancelled;
