@@ -20,6 +20,7 @@
 @end
 
 @implementation YSCoreDataOperation
+@synthesize isCancelled = _isCancelled;
 
 - (id)init
 {
@@ -424,7 +425,16 @@
 
 - (void)cancel
 {
-    _isCancelled = YES;
+    @synchronized(self) {
+        _isCancelled = YES;
+    }
+}
+
+- (BOOL)isCancelled
+{
+    @synchronized(self) {
+        return _isCancelled;
+    }
 }
 
 @end
