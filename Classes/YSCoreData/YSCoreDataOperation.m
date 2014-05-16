@@ -21,6 +21,7 @@
 
 @implementation YSCoreDataOperation
 @synthesize isCancelled = _isCancelled;
+@synthesize isCompleted = _isCompleted;
 
 - (id)init
 {
@@ -173,6 +174,9 @@
                 [fetchResults addObject:obj];
             }
             LOG_YSCORE_DATA(@"Success: Fetch %@", @([fetchResults count]));
+            
+            [self setCompleted:YES];
+            
             if (completion) completion(self.mainContext, fetchResults, nil);
         }];
     }];
@@ -396,6 +400,7 @@
             if (didSaveStore) didSaveStore(self.mainContext, error);
             return ;
         }
+        [self setCompleted:YES];
         LOG_YSCORE_DATA(@"Did save mainContext");
         [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
     }];
@@ -434,6 +439,20 @@
 {
     @synchronized(self) {
         return _isCancelled;
+    }
+}
+
+- (void)setCompleted:(BOOL)completed
+{
+    @synchronized(self) {
+        _isCompleted = completed;
+    }
+}
+
+- (BOOL)isCompleted
+{
+    @synchronized(self) {
+        return _isCompleted;
     }
 }
 

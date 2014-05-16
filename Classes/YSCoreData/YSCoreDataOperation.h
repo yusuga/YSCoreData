@@ -70,5 +70,6 @@ typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *contex
 
 - (void)cancel;
 @property (nonatomic, readonly) BOOL isCancelled;
+@property (nonatomic, readonly) BOOL isCompleted;
 
 @end
