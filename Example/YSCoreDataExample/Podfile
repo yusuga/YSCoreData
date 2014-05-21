@@ -1,5 +1,5 @@
 platform :ios, '7.0'
 
-pod 'YSFileManager'
+pod 'YSFileManager', :git => 'https://github.com/yusuga/YSFileManager.git'
 pod 'UIActionSheet+Blocks'
 pod 'TKRGuard'
