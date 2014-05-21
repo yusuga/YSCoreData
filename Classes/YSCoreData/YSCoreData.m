@@ -7,7 +7,6 @@
 //
 
 #import "YSCoreData.h"
-#import <YSFileManager/YSFileManager.h>
 
 @interface YSCoreData ()
 
@@ -60,28 +59,41 @@
     
     NSString *basePath;
     switch (directoryType) {
+        default:
+            NSAssert2(0, @"Unexpected error: %s; Unknown directoryType = %@;", __func__, @(directoryType));
         case YSCoreDataDirectoryTypeDocument:
-            basePath = [YSFileManager documentDirectory];
+        {
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
+                                                                 NSUserDomainMask,
+                                                                 YES);
+            basePath = [paths objectAtIndex:0];
             break;
+        }
         case YSCoreDataDirectoryTypeTemporary:
-            basePath = [YSFileManager temporaryDirectory];
+            basePath = NSTemporaryDirectory();
             break;
         case YSCoreDataDirectoryTypeCaches:
-            basePath = [YSFileManager cachesDirectory];
+        {
+            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory,
+                                                                 NSUserDomainMask,
+                                                                 YES);
+            basePath = [paths objectAtIndex:0];
             break;
-        default:
-            basePath = [YSFileManager documentDirectory];
-            NSAssert2(0, @"Unexpected error: %s; Unknown directoryType = %@;", __func__, @(directoryType));
-            break;
+        }
     }
     NSString *dbPath = databasePath;
     if (databasePath == nil || databasePath.length == 0) {
         dbPath = @"Database.db";
     }
-    NSArray *pathComponents = [dbPath pathComponents];
-    if ([pathComponents count] > 1) {
+    if ([[dbPath pathComponents] count] > 1) {
         // ディレクトリの作成
-        [YSFileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:[databasePath stringByDeletingLastPathComponent]]];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSError *error = nil;
+        BOOL created = [fileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:[databasePath stringByDeletingLastPathComponent]]
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:&error];
+        NSAssert2(!created || error == nil, @"created: %@, error: %@", @(created), error);
     }
     return [basePath stringByAppendingPathComponent:databasePath];
 }
@@ -90,9 +102,11 @@
 {
     NSLog(@"%s", __func__);
     NSString *path = self.databaseFullPath;
-    BOOL ret = [YSFileManager removeAtPath:path];
-    [YSFileManager removeAtPath:[path stringByAppendingString:@"-shm"]];
-    [YSFileManager removeAtPath:[path stringByAppendingString:@"-wal"]];
+    NSFileManager *fileManager = [[NSFileManager alloc] init];
+    BOOL ret = [fileManager removeItemAtPath:path error:NULL];
+    [fileManager removeItemAtPath:[path stringByAppendingString:@"-shm"] error:NULL];
+    [fileManager removeItemAtPath:[path stringByAppendingString:@"-wal"] error:NULL];
+    
     self.privateWriterContext = nil;
     _mainContext = nil;
     self.persistentStoreCoordinator = nil;
@@ -292,5 +306,9 @@
     }
     return _mainContext;
 }
+
+#pragma mark - helper
+
+
 
 @end
