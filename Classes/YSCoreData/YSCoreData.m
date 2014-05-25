@@ -89,11 +89,12 @@
         // ディレクトリの作成
         NSFileManager *fileManager = [NSFileManager defaultManager];
         NSError *error = nil;
-        BOOL created = [fileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:[databasePath stringByDeletingLastPathComponent]]
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:&error];
-        NSAssert2(!created || error == nil, @"created: %@, error: %@", @(created), error);
+        [fileManager createDirectoryAtPath:[basePath stringByAppendingPathComponent:
+                                            [databasePath stringByDeletingLastPathComponent]]
+               withIntermediateDirectories:YES
+                                attributes:nil
+                                     error:&error];
+        NSAssert1(error == nil, @"error: %@", error);
     }
     return [basePath stringByAppendingPathComponent:databasePath];
 }
