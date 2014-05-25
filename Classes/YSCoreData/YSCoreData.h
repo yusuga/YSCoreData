@@ -37,17 +37,17 @@ typedef enum {
 
 - (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   error:(NSError **)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                      error:(NSError **)errorPtr;
 
 - (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                          error:(NSError **)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
-                     didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                     didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
 - (NSDictionary*)countAllEntitiesByName;
@@ -58,13 +58,13 @@ typedef enum {
 
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                                   completion:(YSCoreDataOperationCompletion)completion
-                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 - (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                                  completion:(YSCoreDataOperationFetchCompletion)completion;
 
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                                         completion:(YSCoreDataOperationCompletion)completion
-                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite;
+                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
 @end

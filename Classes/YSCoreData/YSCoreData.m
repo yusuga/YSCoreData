@@ -130,18 +130,18 @@
 
 - (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                   error:(NSError **)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
     
-    return [ope writeWithConfigureManagedObject:configure error:errorPtr didSaveStore:didSaveSQLite];
+    return [ope writeWithConfigureManagedObject:configure error:errorPtr didSaveStore:didSaveStore];
 }
 
 - (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
                                                   completion:(YSCoreDataOperationCompletion)completion
-                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
@@ -150,7 +150,7 @@
                                                                 privateWriterContext:self.privateWriterContext];
     [ope asyncWriteWithConfigureManagedObject:configure
                                    completion:completion
-                                 didSaveStore:didSaveSQLite];
+                                 didSaveStore:didSaveStore];
     return ope;
 }
 
@@ -183,28 +183,28 @@
 
 - (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                          error:(NSError **)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
     
-    return [ope removeObjectsWithConfigureFetchRequest:configure error:errorPtr didSaveStore:didSaveSQLite];
+    return [ope removeObjectsWithConfigureFetchRequest:configure error:errorPtr didSaveStore:didSaveStore];
 }
 
 - (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
-                     didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                     didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
                                                                 privateWriterContext:self.privateWriterContext];
     
-    return [ope removeAllObjectsWithManagedObjectModel:self.managedObjectModel error:errorPtr didSaveStore:didSaveSQLite];
+    return [ope removeAllObjectsWithManagedObjectModel:self.managedObjectModel error:errorPtr didSaveStore:didSaveStore];
 }
 
 - (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                                         completion:(YSCoreDataOperationCompletion)completion
-                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveSQLite
+                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     NSManagedObjectContext *tempContext = [self newTemporaryContext];
     
@@ -213,7 +213,7 @@
                                                                 privateWriterContext:self.privateWriterContext];
     [ope asyncRemoveRecordWithConfigureFetchRequest:configure
                                          completion:completion
-                                       didSaveStore:didSaveSQLite];
+                                       didSaveStore:didSaveStore];
     return ope;
 }
 
