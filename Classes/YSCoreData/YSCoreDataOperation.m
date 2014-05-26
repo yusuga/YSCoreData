@@ -371,6 +371,7 @@
     if (!self.temporaryContext.hasChanges) {
         LOG_YSCORE_DATA(@"temporaryContext.hasChanges == NO");
         dispatch_async(dispatch_get_main_queue(), ^{
+            [self setCompleted:YES];
             if (didMergeMainContext) didMergeMainContext(self.mainContext, nil);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (didSaveStore) didSaveStore(self.privateWriterContext, nil);
@@ -393,6 +394,7 @@
     }
     LOG_YSCORE_DATA(@"Did save temporaryContext");
     [self.mainContext performBlock:^{
+        [self setCompleted:YES];
         if (didMergeMainContext) didMergeMainContext(self.mainContext, nil);
         NSError *error = nil;
         if (![self.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
@@ -400,7 +402,6 @@
             if (didSaveStore) didSaveStore(self.mainContext, error);
             return ;
         }
-        [self setCompleted:YES];
         LOG_YSCORE_DATA(@"Did save mainContext");
         [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
     }];
