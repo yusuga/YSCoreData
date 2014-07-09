@@ -123,6 +123,7 @@
         
         if ([results count] == 0) {
             LOG_YSCORE_DATA(@"Fetch result is none");
+            [strongSelf setCompleted:YES];
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) completion(strongSelf, results, nil);
             });
@@ -174,7 +175,6 @@
             LOG_YSCORE_DATA(@"Success: Fetch %@", @([fetchResults count]));
             
             [self setCompleted:YES];
-            
             if (completion) completion(strongSelf, fetchResults, nil);
         }];
     }];
@@ -253,15 +253,6 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) completion(strongSelf, error);
                 if (didSaveStore) didSaveStore(strongSelf, error);
-            });
-            return;
-        }
-        
-        if ([results count] == 0) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                LOG_YSCORE_DATA(@"Fetch result is none");
-                if (completion) completion(strongSelf, nil);
-                if (didSaveStore) didSaveStore(strongSelf, nil);
             });
             return;
         }
