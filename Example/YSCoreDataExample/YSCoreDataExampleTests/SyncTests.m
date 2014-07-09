@@ -55,34 +55,37 @@
 
 - (void)databaseTestWithTwitterStorage:(TwitterStorage*)twitterStorage
 {
-    NSUInteger insertCount = 100;
     NSError *error = nil;
+    NSUInteger insertCount = 100;
     
-    // insert 100
+    /* insert */
     [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
         NSError *error = nil;
-        XCTAssertTrue([twitterStorage insertTweetsWithTweetJsons:newTweets error:nil didSaveStore:^(NSManagedObjectContext *context, NSError *error)
-                         {
-                             if (error) {
-                                 XCTFail(@"error: %@", error);
-                             }
-                             RESUME;
-                         }]);
+        XCTAssertTrue([twitterStorage insertTweetsWithTweetJsons:newTweets error:&error didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+            XCTAssertTrue([NSThread isMainThread]);
+            
+            XCTAssertNotNil(operation);
+            XCTAssertFalse(operation.isCancelled);
+            XCTAssertTrue(operation.isCompleted);
+            
+            XCTAssertNil(error, @"error: %@", error);
+            RESUME;
+        }]);
         XCTAssertNil(error, @"error: %@", error);
         RESUME;
     }];
     WAIT_TIMES(2);
     
-    // count record
+    /* count record */
     XCTAssertTrue([twitterStorage countTweetRecord] == insertCount, @"count tweet record: %@", @([twitterStorage countTweetRecord]));
 
-    // fetch 10
-    NSUInteger fetchNum = 10;
+    /* fetch */
+    NSUInteger fetchCount = 80;
     error = nil;
-    NSArray *tweets = [twitterStorage fetchTweetsWithLimit:fetchNum maxId:nil error:&error];
-    if (error || [tweets count] != fetchNum) {
-        XCTFail(@"%@", tweets);
-    }
+    NSArray *tweets = [twitterStorage fetchTweetsWithLimit:fetchCount maxId:nil error:&error];
+    XCTAssertNil(error, @"error: %@", error);
+    XCTAssertEqual([tweets count], fetchCount, @"tweets count: %zd", [tweets count]);
+    
     for (Tweet *tw in tweets) {
         XCTAssertTrue([tw isKindOfClass:[Tweet class]], @"%@", NSStringFromClass([tw class]));
         XCTAssertTrue([tw.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
@@ -96,24 +99,27 @@
         XCTAssertTrue([user.screen_name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
     }
 
-
-    // is user unique
+    /* is user unique */
     NSUInteger savedUserNum = [twitterStorage countUserRecord];
     NSUInteger maxUserNum = [[TwitterRequest userNames] count];
     XCTAssertTrue(savedUserNum == maxUserNum, @"savedUserNum = %@, maxUserNum = %@", @(savedUserNum), @(maxUserNum));
     
-    // remove all objects
+    /* remove all objects */
     error = nil;
-    XCTAssertTrue([twitterStorage removeAllObjectsWithError:&error didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
-        if (error) {
-            XCTFail(@"%@", error);
-        }
+    XCTAssertTrue([twitterStorage removeAllObjectsWithError:&error didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertFalse(operation.isCancelled);
+        XCTAssertTrue(operation.isCompleted);
+        
+        XCTAssertNil(error, @"error: %@", error);
         RESUME;
     }]);
     XCTAssertNil(error, @"error: %@", error);
     WAIT;
     
-    // count all entities
+    /* count all entities */
     NSDictionary *countAllEntities = [twitterStorage countAllEntitiesByName];
     XCTAssertTrue([countAllEntities count] > 0, @"countAllEntities count: %@", @([countAllEntities count]));
     for (NSNumber *count in [countAllEntities allValues]) {

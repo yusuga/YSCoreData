@@ -78,12 +78,11 @@ NSString * const kTwitterStorageOfMainBundlePath = @"Twitter.db";
 {
     NSString *key = @"remove";
     NSError *error = nil;
-    [coreData removeAllObjectsWithError:&error didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
+    [coreData removeAllObjectsWithError:&error didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+        NSAssert1(error == nil, @"error: %@", error);
         [TKRGuard resumeForKey:key];
     }];
-    if (error) {
-        NSAssert1(0, @"error: %@", error);
-    }
+    NSAssert1(error == nil, @"error: %@", error);
     [TKRGuard waitForKey:key];
 }
 

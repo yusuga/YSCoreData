@@ -50,22 +50,44 @@
 
 - (void)cancelWriteWithCoreData:(YSCoreData*)coreData
 {
-    YSCoreDataOperation *ope = [coreData asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context,
-                                                                                YSCoreDataOperation *operation)
-                                {
-                                    [operation cancel];
-                                } completion:^(NSManagedObjectContext *context, NSError *error) {
-                                    if (error == nil) {
-                                        XCTFail();
-                                    }
-                                    XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
-                                    XCTAssertTrue(error.code == YSCoreDataErrorCodeCancel, @"code = %@;", @(error.code));
-                                    RESUME;
-                                } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
-                                    XCTAssertNotNil(error, @"error: %@", error);
-                                    RESUME;
-                                }];
-    WAIT_TIMES(2);
+    YSCoreDataOperation *ope = [coreData asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        XCTAssertFalse([NSThread isMainThread]);
+        
+        XCTAssertNotNil(context);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertTrue(operation.isCancelled);
+        XCTAssertFalse(operation.isCompleted);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            RESUME;
+        });
+    } completion:^(YSCoreDataOperation *operation, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertTrue(operation.isCancelled);
+        XCTAssertFalse(operation.isCompleted);
+
+        XCTAssertNotNil(error);
+        XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
+        XCTAssertEqual(error.code, YSCoreDataErrorCodeCancel, @"code: %zd", error.code);
+        RESUME;
+    } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertTrue(operation.isCancelled);
+        XCTAssertFalse(operation.isCompleted);
+        
+        XCTAssertNotNil(error);
+        XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
+        XCTAssertEqual(error.code, YSCoreDataErrorCodeCancel, @"code: %zd", error.code);
+        RESUME;
+    }];
+    [ope cancel];
+    WAIT_TIMES(3);
+    
+    XCTAssertNotNil(ope);
     XCTAssertTrue(ope.isCancelled);
     XCTAssertFalse(ope.isCompleted);
 }
@@ -89,20 +111,34 @@
 
 - (void)cancelFetchWithCoreData:(YSCoreData*)coreData
 {
-    YSCoreDataOperation *ope = [coreData asyncFetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
-                                                                                               YSCoreDataOperation *operation)
-                                {
-                                    [operation cancel];
-                                    return [[NSFetchRequest alloc] init];
-                                } completion:^(NSManagedObjectContext *context, NSArray *fetchResults, NSError *error) {
-                                    if (error == nil) {
-                                        XCTFail();
-                                    }
-                                    XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
-                                    XCTAssertTrue(error.code == YSCoreDataErrorCodeCancel, @"code = %@;", @(error.code));
-                                    RESUME;
-                                }];
-    WAIT;
+    YSCoreDataOperation *ope = [coreData asyncFetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        XCTAssertFalse([NSThread isMainThread]);
+        
+        XCTAssertNotNil(context);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertTrue(operation.isCancelled);
+        XCTAssertFalse(operation.isCompleted);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            RESUME;
+        });
+        return [[NSFetchRequest alloc] init];
+    } completion:^(YSCoreDataOperation *operation, NSArray *fetchResults, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertTrue(operation.isCancelled);
+        XCTAssertFalse(operation.isCompleted);
+        
+        XCTAssertFalse([fetchResults count]);
+        
+        XCTAssertNotNil(error);
+        XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain = %@;", error.domain);
+        XCTAssertEqual(error.code, YSCoreDataErrorCodeCancel, @"code: %zd", error.code);
+        RESUME;
+    }];
+    [ope cancel];
+    WAIT_TIMES(2);
     XCTAssertTrue(ope.isCancelled);
     XCTAssertFalse(ope.isCompleted);
 }
@@ -134,15 +170,25 @@
     NSUInteger insertCount = 100;
     __block YSCoreDataOperation *ope;
     
-    // insert 100
+    /* insert */
     [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
-        ope = [twitterStorage asyncInsertTweetsWithTweetJsons:newTweets completion:^(NSManagedObjectContext *context, NSError *error) {
-            if (error) {
-                XCTFail(@"%@", error);
-            }
+        ope = [twitterStorage asyncInsertTweetsWithTweetJsons:newTweets completion:^(YSCoreDataOperation *operation, NSError *error) {
+            XCTAssertTrue([NSThread isMainThread]);
+            
+            XCTAssertNotNil(operation);
+            XCTAssertFalse(operation.isCancelled);
+            XCTAssertTrue(operation.isCompleted);
+            
+            XCTAssertNil(error, @"error: %@", error);
             RESUME;
-        } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
-            XCTAssertTrue([twitterStorage countTweetRecord] == insertCount, @"count = %@", @([twitterStorage countTweetRecord]));
+        } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+            XCTAssertTrue([NSThread isMainThread]);
+            
+            XCTAssertNotNil(operation);
+            XCTAssertFalse(operation.isCancelled);
+            XCTAssertTrue(operation.isCompleted);
+            
+            XCTAssertNil(error, @"error: %@", error);
             RESUME;
         }];
     }];
@@ -152,54 +198,71 @@
     XCTAssertTrue(ope.isCompleted);
     ope = nil;
     
-    // count record
+    /* count record */
     XCTAssertTrue([twitterStorage countTweetRecord] == insertCount, @"count tweet record: %@", @([twitterStorage countTweetRecord]));
     
-    // fetch 10
-    ope = [twitterStorage asyncFetchTweetsLimit:10 maxId:nil completion:^(NSManagedObjectContext *context, NSArray *tweets, NSError *error)
-           {
-               if (error || [tweets count] != 10) {
-                   XCTFail(@"%@", tweets);
-               }
-               for (Tweet *tw in tweets) {
-                   XCTAssertTrue([tw isKindOfClass:[Tweet class]], @"%@", NSStringFromClass([tw class]));
-                   XCTAssertTrue([tw.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
-                   XCTAssertTrue([tw.text isKindOfClass:[NSString class]], @"%@", NSStringFromClass([tw.text class]));
-                   XCTAssertTrue([tw.user_id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
-                   
-                   User *user = tw.user;
-                   XCTAssertTrue([user isKindOfClass:[User class]], @"%@", NSStringFromClass([user class]));
-                   XCTAssertTrue([user.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([user class]));
-                   XCTAssertTrue([user.name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
-                   XCTAssertTrue([user.screen_name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
-               }
-               RESUME;
-           }];
+    /* fetch */
+    NSUInteger fetchCount = 90;
+    ope = [twitterStorage asyncFetchTweetsLimit:fetchCount maxId:nil completion:^(YSCoreDataOperation *operation, NSArray *fetchResults, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertFalse(operation.isCancelled);
+        XCTAssertTrue(operation.isCompleted);
+        
+        XCTAssertNil(error, @"error: %@", error);
+        
+        XCTAssertEqual([fetchResults count], fetchCount, @"fetchResults count: %zd", [fetchResults count]);
+        for (Tweet *tw in fetchResults) {
+            XCTAssertTrue([tw isKindOfClass:[Tweet class]], @"%@", NSStringFromClass([tw class]));
+            XCTAssertTrue([tw.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
+            XCTAssertTrue([tw.text isKindOfClass:[NSString class]], @"%@", NSStringFromClass([tw.text class]));
+            XCTAssertTrue([tw.user_id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([tw.id class]));
+            
+            User *user = tw.user;
+            XCTAssertTrue([user isKindOfClass:[User class]], @"%@", NSStringFromClass([user class]));
+            XCTAssertTrue([user.id isKindOfClass:[NSNumber class]], @"%@", NSStringFromClass([user class]));
+            XCTAssertTrue([user.name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
+            XCTAssertTrue([user.screen_name isKindOfClass:[NSString class]], @"%@", NSStringFromClass([user class]));
+        }
+        RESUME;
+    }];
     WAIT;
     
     XCTAssertFalse(ope.isCancelled);
     XCTAssertTrue(ope.isCompleted);
     ope = nil;
 
-    // is user unique
+    /* is user unique */
     NSUInteger savedUserNum = [twitterStorage countUserRecord];
     NSUInteger maxUserNum = [[TwitterRequest userNames] count];
     XCTAssertTrue(savedUserNum == maxUserNum, @"savedUserNum = %@, maxUserNum = %@", @(savedUserNum), @(maxUserNum));
     
-    // remove record
-    ope = [twitterStorage asyncRemoveAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
-        if (error) {
-            XCTFail(@"%@", error);
-        }
+    /* remove record */
+    ope = [twitterStorage asyncRemoveAllTweetRecordWithCompletion:^(YSCoreDataOperation *operation, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertFalse(operation.isCancelled);
+        XCTAssertTrue(operation.isCompleted);
+        
+        XCTAssertNil(error, @"error: %@", error);
         RESUME;
-    } didSaveStore:^(NSManagedObjectContext *context, NSError *error) {
-        XCTAssertTrue([twitterStorage countTweetRecord] == 0, @"count = %@", @([twitterStorage countTweetRecord]));
+    } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+        XCTAssertTrue([NSThread isMainThread]);
+        
+        XCTAssertNotNil(operation);
+        XCTAssertFalse(operation.isCancelled);
+        XCTAssertTrue(operation.isCompleted);
+        
+        XCTAssertNil(error, @"error: %@", error);
         RESUME;
     }];
     WAIT_TIMES(2);
     
     XCTAssertFalse(ope.isCancelled);
     XCTAssertTrue(ope.isCompleted);
+    XCTAssertEqual([twitterStorage countTweetRecord], 0, @"count: %zd", [twitterStorage countTweetRecord]);
 }
 
 @end
