@@ -59,8 +59,7 @@
              case 2:
              {
                  NSError *error = nil;
-                 BOOL success = [storage removeAllObjectsWithError:&error didSaveStore:^(NSManagedObjectContext *context, NSError *error)
-                 {
+                 BOOL success = [storage removeAllObjectsWithError:&error didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
                      if (error) {
                          [[[UIAlertView alloc] initWithTitle:@"Error: removeAllObjects"
                                                      message:[error description]
@@ -88,7 +87,7 @@
     TwitterStorage *ts = [TwitterStorage sharedInstance];
     
     __weak typeof(self) wself = self;
-    [ts asyncRemoveAllTweetRecordWithCompletion:^(NSManagedObjectContext *context, NSError *error) {
+    [ts asyncRemoveAllTweetRecordWithCompletion:^(YSCoreDataOperation *operation, NSError *error) {
         if (error) {
             NSLog(@"error %@", error);
             return ;
