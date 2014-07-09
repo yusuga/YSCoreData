@@ -56,7 +56,7 @@
         if (errorPtr != NULL) {
             *errorPtr = coreDataError;
         }
-        if (didSaveStore) didSaveStore(self.mainContext, coreDataError);
+        if (didSaveStore) didSaveStore(self, coreDataError);
         return NO;
     }
     configure(self.mainContext, self);
@@ -67,28 +67,25 @@
                                   completion:(YSCoreDataOperationCompletion)completion
                                 didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
+    __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         if (configure) {
-            configure(self.temporaryContext, self);
+            configure(strongSelf.temporaryContext, strongSelf);
             
             if (self.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncWrite");
                 dispatch_async(dispatch_get_main_queue(), ^{
                     NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
-                    if (completion) completion(self.temporaryContext, error);
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        if (didSaveStore) didSaveStore(self.temporaryContext, error);
-                    });
+                    if (completion) completion(strongSelf, error);
+                    if (didSaveStore) didSaveStore(strongSelf, error);
                 });
                 return ;
             }
         } else {
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSError *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
-                if (completion) completion(self.temporaryContext, error);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveStore) didSaveStore(self.temporaryContext, error);
-                });
+                if (completion) completion(strongSelf, error);
+                if (didSaveStore) didSaveStore(strongSelf, error);
             });
             return ;
         }
@@ -111,14 +108,15 @@
 - (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                  completion:(YSCoreDataOperationFetchCompletion)completion
 {
+    __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
-        NSArray *results = [self excuteFetchWithContext:self.temporaryContext
-                                  configureFetchRequest:configure
-                                                  error:&error];
+        NSArray *results = [strongSelf excuteFetchWithContext:strongSelf.temporaryContext
+                                        configureFetchRequest:configure
+                                                        error:&error];
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion) completion(self.temporaryContext, nil, error);
+                if (completion) completion(strongSelf, nil, error);
             });
             return;
         }
@@ -126,7 +124,7 @@
         if ([results count] == 0) {
             LOG_YSCORE_DATA(@"Fetch result is none");
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion) completion(self.temporaryContext, results, nil);
+                if (completion) completion(strongSelf, results, nil);
             });
             return;
         }
@@ -134,18 +132,18 @@
         /*
          FetchしたNSManagedObjectを別スレッドに渡せない(temporaryContextと共に解放される)ので
          スレッドセーフなNSManagedObjectIDを保持する
-         ※ 正確に言うと、NSManagedObject自体は解放されてないんだけどpropertyが解放されている
+         ※ NSManagedObject自体は解放されてないんだけどpropertyが解放されている
          */
         NSMutableArray *ids = [NSMutableArray arrayWithCapacity:[results count]];
         for (NSManagedObject *obj in results) {
             [ids addObject:obj.objectID];
         }
         
-        [self.mainContext performBlock:^{ // == dispatch_async(dispatch_get_main_queue(), ^{
+        [strongSelf.mainContext performBlock:^{ // == dispatch_async(dispatch_get_main_queue(), ^{
             
-            if (self.isCancelled) {
+            if (strongSelf.isCancelled) {
                 LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
-                if (completion) completion(self.mainContext,
+                if (completion) completion(strongSelf,
                                            nil,
                                            [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch]);
                 return;
@@ -165,10 +163,10 @@
             NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
             for (NSManagedObjectID *objId in ids) {
                 NSError *error = nil;
-                NSManagedObject *obj = [self.mainContext existingObjectWithID:objId error:&error];
+                NSManagedObject *obj = [strongSelf.mainContext existingObjectWithID:objId error:&error];
                 if (obj == nil || error) {
                     NSLog(@"Error: Fetch; error = %@;", error);
-                    if (completion) completion(self.mainContext, nil, error);
+                    if (completion) completion(strongSelf, nil, error);
                     return;
                 }
                 [fetchResults addObject:obj];
@@ -177,7 +175,7 @@
             
             [self setCompleted:YES];
             
-            if (completion) completion(self.mainContext, fetchResults, nil);
+            if (completion) completion(strongSelf, fetchResults, nil);
         }];
     }];
 }
@@ -194,7 +192,7 @@
         return YES;
     } else {
         if (errorPtr != NULL) *errorPtr = error;
-        if (didSaveStore) didSaveStore(self.mainContext, error);
+        if (didSaveStore) didSaveStore(self, error);
         return NO;
     }
 }
@@ -216,7 +214,7 @@
             if (error && errorPtr != NULL) {
                 *errorPtr = error;
             }
-            if (didSaveStore) didSaveStore(self.mainContext, error);
+            if (didSaveStore) didSaveStore(self, error);
             return NO;
         }
     }
@@ -245,6 +243,7 @@
                                         completion:(YSCoreDataOperationCompletion)completion
                                       didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
+    __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
         NSArray *results = [self excuteFetchWithContext:self.temporaryContext
@@ -252,10 +251,8 @@
                                                   error:&error];
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion) completion(self.temporaryContext, error);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveStore) didSaveStore(self.temporaryContext, error);
-                });
+                if (completion) completion(strongSelf, error);
+                if (didSaveStore) didSaveStore(strongSelf, error);
             });
             return;
         }
@@ -263,10 +260,8 @@
         if ([results count] == 0) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 LOG_YSCORE_DATA(@"Fetch result is none");
-                if (completion) completion(self.temporaryContext, nil);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveStore) didSaveStore(self.temporaryContext, nil);
-                });
+                if (completion) completion(strongSelf, nil);
+                if (didSaveStore) didSaveStore(strongSelf, nil);
             });
             return;
         }
@@ -279,10 +274,8 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
                 NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
-                if (completion) completion(self.temporaryContext, error);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (didSaveStore) didSaveStore(self.temporaryContext, error);
-                });
+                if (completion) completion(strongSelf, error);
+                if (didSaveStore) didSaveStore(strongSelf, error);
             });
             return;
         }
@@ -353,9 +346,10 @@
         if (errorPtr != NULL) {
             *errorPtr = error;
         }
-        if (didSaveStore) didSaveStore(self.mainContext, error);
+        if (didSaveStore) didSaveStore(self, error);
         return NO;
     }
+    [self setCompleted:YES];
     [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
     return YES;
 }
@@ -367,15 +361,15 @@
      temporaryContextの-performBlock:から呼び出されることを前提としている
      */
     
+    __strong typeof(self) strongSelf = self;
+    
     // コンテキストが変更されていなければ保存しない
     if (!self.temporaryContext.hasChanges) {
         LOG_YSCORE_DATA(@"temporaryContext.hasChanges == NO");
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self setCompleted:YES];
-            if (didMergeMainContext) didMergeMainContext(self.mainContext, nil);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (didSaveStore) didSaveStore(self.privateWriterContext, nil);
-            });
+            [strongSelf setCompleted:YES];
+            if (didMergeMainContext) didMergeMainContext(strongSelf, nil);
+            if (didSaveStore) didSaveStore(strongSelf, nil);
         });
         return;
     }
@@ -385,43 +379,42 @@
     if (![self.temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"Error: temporaryContext save; error = %@;", error);
-            if (didMergeMainContext) didMergeMainContext(self.temporaryContext, error);
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (didSaveStore) didSaveStore(self.temporaryContext, error);
-            });
+            if (didMergeMainContext) didMergeMainContext(strongSelf, error);
+            if (didSaveStore) didSaveStore(strongSelf, error);
         });
         return;
     }
     LOG_YSCORE_DATA(@"Did save temporaryContext");
     [self.mainContext performBlock:^{
-        [self setCompleted:YES];
-        if (didMergeMainContext) didMergeMainContext(self.mainContext, nil);
+        [strongSelf setCompleted:YES];
+        if (didMergeMainContext) didMergeMainContext(strongSelf, nil);
         NSError *error = nil;
-        if (![self.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
+        if (![strongSelf.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
             NSLog(@"Error: mainContext save; error = %@;", error);
-            if (didSaveStore) didSaveStore(self.mainContext, error);
+            if (didSaveStore) didSaveStore(strongSelf, error);
             return ;
         }
         LOG_YSCORE_DATA(@"Did save mainContext");
-        [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
+        [strongSelf asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
     }];
 }
 
 - (void)asyncSavePrivateWriterContextWithdidSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
+    __strong typeof(self) strongSelf = self;
     [self.privateWriterContext performBlock:^{
         NSError *error = nil;
-        if (![self.privateWriterContext save:&error]) { // SQLiteへ保存
+        if (![strongSelf.privateWriterContext save:&error]) { // SQLiteへ保存
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                if (didSaveStore) didSaveStore(self.privateWriterContext, error);
+                if (didSaveStore) didSaveStore(strongSelf, error);
             });
             return ;
         }
         LOG_YSCORE_DATA(@"Did save privateWriterContext");
         if (didSaveStore) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                didSaveStore(self.privateWriterContext, nil);
+                didSaveStore(strongSelf, nil);
             });
         }
     }];

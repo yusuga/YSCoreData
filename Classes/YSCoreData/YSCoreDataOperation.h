@@ -11,7 +11,8 @@
 #import "YSCoreDataError.h"
 
 #if DEBUG
-    #if 1
+    #if 0
+        #warning enable debug log
         #define LOG_YSCORE_DATA(...) NSLog(__VA_ARGS__)
     #endif
 #endif
@@ -28,8 +29,8 @@ typedef void(^YSCoreDataOperationWriteConfigure)(NSManagedObjectContext *context
 typedef NSFetchRequest*(^YSCoreDataOperationFetchRequestConfigure)(NSManagedObjectContext *context,
                                                                    YSCoreDataOperation *operation);
 
-typedef void(^YSCoreDataOperationCompletion)(NSManagedObjectContext *context, NSError *error);
-typedef void(^YSCoreDataOperationFetchCompletion)(NSManagedObjectContext *context, NSArray *fetchResults, NSError *error);
+typedef void(^YSCoreDataOperationCompletion)(YSCoreDataOperation *operation, NSError *error);
+typedef void(^YSCoreDataOperationFetchCompletion)(YSCoreDataOperation *operation, NSArray *fetchResults, NSError *error);
 
 
 @interface YSCoreDataOperation : NSObject
