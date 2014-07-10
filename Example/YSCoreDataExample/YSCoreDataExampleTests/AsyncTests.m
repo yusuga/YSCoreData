@@ -265,4 +265,144 @@
     XCTAssertEqual([twitterStorage countTweetRecord], 0, @"count: %zd", [twitterStorage countTweetRecord]);
 }
 
+#pragma mark - unique insert
+
+- (void)testUniqueInsertInTwitterStorageWithSQLite
+{
+    [self uniqueInsertWithTwitterStorage:[Utility twitterStorageWithStoreType:NSSQLiteStoreType]];
+}
+
+- (void)testUniqueInsertInTwitterStorageWithBinary
+{
+    [self uniqueInsertWithTwitterStorage:[Utility twitterStorageWithStoreType:NSBinaryStoreType]];
+}
+
+- (void)testUniqueInsertInTwitterStorageWithInMemory
+{
+    [self uniqueInsertWithTwitterStorage:[Utility twitterStorageWithStoreType:NSInMemoryStoreType]];
+}
+
+- (void)testUniqueInsertInTwitterStorageOfMainBundle
+{
+    [self uniqueInsertWithTwitterStorage:[Utility twitterStorageOfMainBundle]];
+}
+
+- (void)uniqueInsertWithTwitterStorage:(TwitterStorage*)twitterStorage
+{
+    NSUInteger insertCount = 10;
+    NSUInteger repeat = 3;
+    NSMutableArray *operations = @[].mutableCopy;
+    
+    XCTAssertTrue(repeat > 1, @"repeat: %zd", repeat);
+    
+    /* insert */
+    [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
+        for (NSUInteger i = 0; i < repeat; i++) {
+            YSCoreDataOperation *ope = [twitterStorage asyncInsertTweetsWithTweetJsons:newTweets completion:^(YSCoreDataOperation *operation, NSError *error) {
+                XCTAssertTrue([NSThread isMainThread]);
+                
+                XCTAssertNotNil(operation);
+                XCTAssertFalse(operation.isCancelled);
+                XCTAssertTrue(operation.isCompleted);
+                
+                XCTAssertNil(error, @"error: %@", error);
+                RESUME;
+            } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+                XCTAssertTrue([NSThread isMainThread]);
+                
+                XCTAssertNotNil(operation);
+                XCTAssertFalse(operation.isCancelled);
+                XCTAssertTrue(operation.isCompleted);
+                
+                XCTAssertNil(error, @"error: %@", error);
+                RESUME;
+            }];
+            [operations addObject:ope];
+        }
+    }];
+    WAIT_TIMES(2*repeat);
+    
+    XCTAssertEqual([operations count], repeat, @"operations count: %zd", [operations count]);
+    for (YSCoreDataOperation *ope in operations) {
+        XCTAssertFalse(ope.isCancelled);
+        XCTAssertTrue(ope.isCompleted);
+    }
+    
+    /* count record */
+    XCTAssertTrue([twitterStorage countTweetRecord] == insertCount, @"count tweet record: %@", @([twitterStorage countTweetRecord]));
+}
+
+#pragma mark - timeout
+
+- (void)testWriteTimeoutInTwitterStorageWithSQLite
+{
+    [self writeTimeoutWithTwitterStorage:[Utility twitterStorageWithStoreType:NSSQLiteStoreType]];
+}
+
+- (void)testWriteTimeoutInTwitterStorageWithBinary
+{
+    [self writeTimeoutWithTwitterStorage:[Utility twitterStorageWithStoreType:NSBinaryStoreType]];
+}
+
+- (void)testWriteTimeoutInTwitterStorageWithInMemory
+{
+    [self writeTimeoutWithTwitterStorage:[Utility twitterStorageWithStoreType:NSInMemoryStoreType]];
+}
+
+- (void)testWriteTimeoutInTwitterStorageOfMainBundle
+{
+    [self writeTimeoutWithTwitterStorage:[Utility twitterStorageOfMainBundle]];
+}
+
+- (void)writeTimeoutWithTwitterStorage:(TwitterStorage*)twitterStorage
+{
+    int64_t timeout = 3;
+    [[twitterStorage class] setCommonOperationTimeoutPerSec:timeout];
+    
+    NSUInteger insertCount = 10;
+    NSUInteger repeat = 2;
+    NSMutableArray *operations = @[].mutableCopy;
+    
+    XCTAssertTrue(repeat > 1, @"repeat: %zd", repeat);
+    
+    /* insert */
+    [TwitterRequest requestTweetsWithCount:insertCount completion:^(NSArray *newTweets) {
+        for (NSUInteger i = 0; i < repeat; i++) {
+            YSCoreDataOperation *ope = [twitterStorage asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+                [NSThread sleepForTimeInterval:timeout];
+            } completion:^(YSCoreDataOperation *operation, NSError *error) {
+                if (i != 0) {
+                    XCTAssertTrue([NSThread isMainThread]);
+                    
+                    XCTAssertNotNil(operation);
+                    XCTAssertFalse(operation.isCancelled);
+                    XCTAssertFalse(operation.isCompleted);
+                    
+                    XCTAssertNotNil(error);
+                    XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain: %@", error.domain);
+                    XCTAssertEqual(error.code, YSCoreDataErrorCodeTimeout, @"code: %zd", error.code);
+                }
+                RESUME;
+            } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+                if (i != 0) {
+                    XCTAssertTrue([NSThread isMainThread]);
+                    
+                    XCTAssertNotNil(operation);
+                    XCTAssertFalse(operation.isCancelled);
+                    XCTAssertFalse(operation.isCompleted);
+                    
+                    XCTAssertNotNil(error);
+                    XCTAssertTrue([error.domain isEqualToString:YSCoreDataErrorDomain], @"domain: %@", error.domain);
+                    XCTAssertEqual(error.code, YSCoreDataErrorCodeTimeout, @"code: %zd", error.code);
+                }
+                RESUME;
+            }];
+            [operations addObject:ope];
+        }
+    }];
+    WAIT_TIMES(2*repeat);
+    
+    XCTAssertEqual([operations count], repeat, @"operations count: %zd", [operations count]);
+}
+
 @end

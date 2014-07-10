@@ -88,7 +88,8 @@ NSString * const kTwitterStorageOfMainBundlePath = @"Twitter.db";
 
 + (void)commonSettins
 {
-    [TKRGuard setDefaultTimeoutInterval:10.];
+    [TKRGuard setDefaultTimeoutInterval:30.];
+    [YSCoreData setCommonOperationTimeoutPerSec:kYSCoreDataOperationDefaultTimeoutPerSec];
 }
 
 @end
