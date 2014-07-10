@@ -16,7 +16,7 @@ NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
 {
     return [NSError errorWithDomain:YSCoreDataErrorDomain
                                code:code
-                           userInfo:@{NSLocalizedDescriptionKey : description}];
+                           userInfo:description ? @{NSLocalizedDescriptionKey : description} : nil];
 }
 
 #pragma mark - Public
@@ -44,6 +44,11 @@ NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
 + (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description
 {
     return [self errorWithCode:YSCoreDataErrorCodeRequiredArgumentIsNil description:description];
+}
+
++ (NSError *)timeoutError
+{
+    return [self errorWithCode:YSCoreDataErrorCodeTimeout description:nil];
 }
 
 @end

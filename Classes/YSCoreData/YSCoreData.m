@@ -308,8 +308,11 @@
     return _mainContext;
 }
 
-#pragma mark - helper
+#pragma mark - settings
 
-
++ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec
+{
+    [YSCoreDataOperation setCommonOperationTimeoutPerSec:perSec];
+}
 
 @end

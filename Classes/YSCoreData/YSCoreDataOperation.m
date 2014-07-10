@@ -9,6 +9,9 @@
 #import "YSCoreDataOperation.h"
 #import <objc/message.h>
 
+static int64_t __operationTimeoutPerSec;
+int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
+
 @interface YSCoreDataOperation ()
 
 @property (nonatomic) NSManagedObjectContext *temporaryContext;
@@ -22,6 +25,51 @@
 @implementation YSCoreDataOperation
 @synthesize isCancelled = _isCancelled;
 @synthesize isCompleted = _isCompleted;
+
++ (void)initialize
+{
+    __operationTimeoutPerSec = kYSCoreDataOperationDefaultTimeoutPerSec;
+}
+
++ (dispatch_queue_t)operationDispatchQueue
+{
+    static dispatch_queue_t __queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        __queue = dispatch_queue_create("jp.YuSugawara.YSCoreDataOperation.queue", NULL);
+    });
+    return __queue;
+}
+
++ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec
+{
+    __operationTimeoutPerSec = perSec;
+}
+
++ (BOOL)setWriteLock:(BOOL)lock
+{
+    static dispatch_semaphore_t __semaphore;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        __semaphore = dispatch_semaphore_create(1);
+    });
+    
+    if (lock) {
+        dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW,
+                                             __operationTimeoutPerSec * NSEC_PER_SEC);
+        if (dispatch_semaphore_wait(__semaphore, __operationTimeoutPerSec == 0 ? DISPATCH_TIME_FOREVER : time) == 0) {
+            return YES;
+        } else {
+            NSLog(@"%s, timeout: %zds", __func__, __operationTimeoutPerSec);
+            return NO;
+        }
+    } else {
+        dispatch_semaphore_signal(__semaphore);
+        return YES;
+    }
+}
+
+#pragma mark -
 
 - (id)init
 {
@@ -68,31 +116,45 @@
                                 didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     __strong typeof(self) strongSelf = self;
-    [self.temporaryContext performBlock:^{
-        if (configure) {
-            configure(strongSelf.temporaryContext, strongSelf);
-            
-            if (self.isCancelled) {
-                LOG_YSCORE_DATA(@"Cancel: asyncWrite");
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
-                    if (completion) completion(strongSelf, error);
-                    if (didSaveStore) didSaveStore(strongSelf, error);
-                });
-                return ;
-            }
+    dispatch_async([[self class] operationDispatchQueue], ^{
+        if ([[strongSelf class] setWriteLock:YES]) {
+            [strongSelf.temporaryContext performBlock:^{
+                if (configure) {
+                    configure(strongSelf.temporaryContext, strongSelf);
+                    
+                    if (strongSelf.isCancelled) {
+                        LOG_YSCORE_DATA(@"Cancel: asyncWrite");
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
+                            if (completion) completion(strongSelf, error);
+                            if (didSaveStore) didSaveStore(strongSelf, error);
+                        });
+                        [[strongSelf class] setWriteLock:NO];
+                        return ;
+                    }
+                } else {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        NSError *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
+                        if (completion) completion(strongSelf, error);
+                        if (didSaveStore) didSaveStore(strongSelf, error);
+                    });
+                    [[strongSelf class] setWriteLock:NO];
+                    return ;
+                }
+                
+                [strongSelf asyncSaveTemporaryContextWithDidMergeMainContext:^(YSCoreDataOperation *operation, NSError *error) {
+                    [[strongSelf class] setWriteLock:NO];
+                    if (completion) completion(operation, error);
+                } didSaveStore:didSaveStore];
+            }];
         } else {
             dispatch_async(dispatch_get_main_queue(), ^{
-                NSError *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
+                NSError *error = [YSCoreDataError timeoutError];
                 if (completion) completion(strongSelf, error);
                 if (didSaveStore) didSaveStore(strongSelf, error);
             });
-            return ;
         }
-        
-        [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
-                                                  didSaveStore:didSaveStore];
-    }];
+    });
 }
 
 #pragma mark - fetch

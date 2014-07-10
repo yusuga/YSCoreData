@@ -67,4 +67,8 @@ typedef enum {
                                                         completion:(YSCoreDataOperationCompletion)completion
                                                       didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
 
+// settings
+
++ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec; // default: 30s, 0 == DISPATCH_TIME_FOREVER
+
 @end

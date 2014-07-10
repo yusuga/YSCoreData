@@ -21,6 +21,8 @@
     #define LOG_YSCORE_DATA(...)
 #endif
 
+extern int64_t const kYSCoreDataOperationDefaultTimeoutPerSec;
+
 @class YSCoreDataOperation;
 
 typedef void(^YSCoreDataOperationWriteConfigure)(NSManagedObjectContext *context,
@@ -72,5 +74,9 @@ typedef void(^YSCoreDataOperationFetchCompletion)(YSCoreDataOperation *operation
 - (void)cancel;
 @property (nonatomic, readonly) BOOL isCancelled;
 @property (nonatomic, readonly) BOOL isCompleted;
+
+// settings
+
++ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec;
 
 @end

@@ -15,6 +15,7 @@ typedef enum {
     YSCoreDataErrorCodeCancel,
     YSCoreDataErrorCodeRequiredArgumentIsNil,
     YSCoreDataErrorCodeSave,
+    YSCoreDataErrorCodeTimeout,
 } YSCoreDataErrorCode;
 
 typedef enum {
@@ -28,5 +29,6 @@ typedef enum {
 
 + (NSError*)cancelErrorWithType:(YSCoreDataErrorOperationType)operationType;
 + (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description;
++ (NSError*)timeoutError;
 
 @end
