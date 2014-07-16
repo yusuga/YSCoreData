@@ -115,6 +115,16 @@
                                 <action selector="insertTweetsButtonDidPush:" destination="Zug-34-Y0Q" id="NKb-M7-vee"/>
                             </connections>
                         </barButtonItem>
+                        <barButtonItem title="update" id="dSt-OZ-5yQ">
+                            <connections>
+                                <action selector="updateButtonDidPush:" destination="Zug-34-Y0Q" id="Fju-EQ-aG1"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem title="asyncUpdate" id="Fid-NP-dKb">
+                            <connections>
+                                <action selector="asyncUpdate:" destination="Zug-34-Y0Q" id="NjR-af-fAX"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem style="plain" systemItem="flexibleSpace" id="xCI-HF-L4s"/>
                         <barButtonItem title="Fetch" id="HvG-ig-h6b">
                             <connections>

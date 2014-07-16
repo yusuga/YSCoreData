@@ -48,6 +48,40 @@
 
 #pragma mark - Button action
 
+- (IBAction)updateButtonDidPush:(id)sender
+{
+    Tweet *tweet = [self.tweets firstObject];
+    NSError *error = nil;
+    [[TwitterStorage sharedInstance] writeWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        tweet.text = @"UPDATE";
+        tweet.user.name = @"NAME";
+    } error:&error didSaveStore:nil];
+    [self.tableView reloadData];
+}
+
+- (IBAction)asyncUpdate:(id)sender
+{
+    Tweet *tweet = [self.tweets firstObject];
+    
+    __weak typeof(self) wself = self;
+    NSManagedObjectID *objectID = tweet.objectID;
+    [[TwitterStorage sharedInstance] asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        NSFetchRequest *req = [[NSFetchRequest alloc] initWithEntityName:tweet.entity.name];
+        req.predicate = [NSPredicate predicateWithFormat:@"self = %@", objectID];
+        req.fetchLimit = 1;
+        
+        NSError *error = nil;
+        Tweet *tweet = [[context executeFetchRequest:req error:&error] firstObject];
+        tweet.text = @"UPDATE";
+        tweet.user.name = @"NAME";
+    } completion:^(YSCoreDataOperation *operation, NSError *error) {
+        NSAssert1(error == nil, @"error: %@", error);
+        [wself.tableView reloadData];
+    } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
+        NSAssert1(error == nil, @"error: %@", error);
+    }];
+}
+
 - (IBAction)fetchButtonDidPush:(id)sender
 {    
     // CoreDataからツイートを取得

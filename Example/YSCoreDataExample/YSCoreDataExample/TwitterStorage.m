@@ -103,9 +103,9 @@
             user = (id)[NSEntityDescription insertNewObjectForEntityForName:@"User"
                                                      inManagedObjectContext:tweet.managedObjectContext];
             user.id = userId;
+            user.name = [userJson objectForKey:@"name"];
+            user.screen_name = [userJson objectForKey:@"screen_name"];
         }
-        user.name = [userJson objectForKey:@"name"];
-        user.screen_name = [userJson objectForKey:@"screen_name"];
         
         tweet.user = user;
     }
