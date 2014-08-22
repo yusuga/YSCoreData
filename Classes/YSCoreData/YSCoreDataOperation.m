@@ -162,7 +162,7 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
 - (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                                      error:(NSError**)errorPtr
 {
-    return [self excuteFetchWithContext:self.mainContext
+    return [self executeFetchWithContext:self.mainContext
                   configureFetchRequest:configure
                                   error:errorPtr];
 }
@@ -173,9 +173,9 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
     __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
-        NSArray *results = [strongSelf excuteFetchWithContext:strongSelf.temporaryContext
-                                        configureFetchRequest:configure
-                                                        error:&error];
+        NSArray *results = [strongSelf executeFetchWithContext:strongSelf.temporaryContext
+                                         configureFetchRequest:configure
+                                                         error:&error];
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) completion(strongSelf, nil, error);
@@ -288,7 +288,7 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
                                          error:(NSError**)errorPtr
 {
     NSError *error = nil;
-    NSArray *results = [self excuteFetchWithContext:self.mainContext configureFetchRequest:configure error:&error];
+    NSArray *results = [self executeFetchWithContext:self.mainContext configureFetchRequest:configure error:&error];
     if (error) {
         if (errorPtr != NULL) {
             *errorPtr = error;
@@ -308,7 +308,7 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
     __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
-        NSArray *results = [self excuteFetchWithContext:self.temporaryContext
+        NSArray *results = [self executeFetchWithContext:self.temporaryContext
                                   configureFetchRequest:configure
                                                   error:&error];
         if (error) {
@@ -338,9 +338,9 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
     }];
 }
 
-#pragma mark - excute
+#pragma mark - execute
 
-- (NSArray*)excuteFetchWithContext:(NSManagedObjectContext*)context
+- (NSArray*)executeFetchWithContext:(NSManagedObjectContext*)context
              configureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
                              error:(NSError**)error
 {
