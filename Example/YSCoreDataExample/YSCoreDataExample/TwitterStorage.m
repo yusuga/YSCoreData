@@ -142,7 +142,9 @@
     if (maxId) {
         request.predicate = [NSPredicate predicateWithFormat:@"id > %@", maxId];
     }
-    request.fetchLimit = limit;
+    if (limit > 0) {
+        request.fetchLimit = limit;
+    }
     NSEntityDescription *tweets = [NSEntityDescription entityForName:@"Tweet" inManagedObjectContext:context];
     [request setEntity:tweets];
     
