@@ -169,8 +169,8 @@
 #pragma mark - remove
 #pragma mark Sync
 
-- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                     error:(NSError**)errorPtr
+- (BOOL)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                              error:(NSError**)errorPtr
 {
     NSParameterAssert([NSThread isMainThread]);
     DDLogVerbose(@"Start %s", __func__);
@@ -186,8 +186,8 @@
     }
 }
 
-- (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
-                                         error:(NSError**)errorPtr
+- (BOOL)removeAllWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
+                                  error:(NSError**)errorPtr
 {
     NSParameterAssert([NSThread isMainThread]);
     DDLogVerbose(@"Start %s", __func__);
@@ -210,8 +210,8 @@
 
 #pragma mark Async
 
-- (void)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                completion:(YSCoreDataOperationCompletion)completion
+- (void)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                         completion:(YSCoreDataOperationCompletion)completion
 {
     NSParameterAssert(fetchRequestBlock);
     DDLogVerbose(@"Start %s", __func__);

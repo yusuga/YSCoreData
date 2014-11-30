@@ -179,7 +179,7 @@
                                                                          mainContext:self.mainContext
                                                                        writerContext:self.writerContext];
     
-    return [ope removeObjectsWithFetchRequestBlock:fetchRequestBlock error:errorPtr];
+    return [ope removeWithFetchRequestBlock:fetchRequestBlock error:errorPtr];
 }
 
 - (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
@@ -188,7 +188,7 @@
                                                                          mainContext:self.mainContext
                                                                        writerContext:self.writerContext];
     
-    return [ope removeAllObjectsWithManagedObjectModel:self.managedObjectModel error:errorPtr];
+    return [ope removeAllWithManagedObjectModel:self.managedObjectModel error:errorPtr];
 }
 
 - (YSCoreDataOperation*)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
@@ -198,7 +198,7 @@
                                                                          mainContext:self.mainContext
                                                                        writerContext:self.writerContext];
     
-    [ope removeObjectsWithFetchRequestBlock:fetchRequestBlock completion:completion];
+    [ope removeWithFetchRequestBlock:fetchRequestBlock completion:completion];
     return ope;
 }
 

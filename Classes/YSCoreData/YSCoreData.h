@@ -49,7 +49,7 @@ typedef enum {
                                  error:(NSError **)errorPtr;
 
 - (YSCoreDataOperation*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                             completion:(YSCoreDataOperationFetchCompletion)completion;
+                                        completion:(YSCoreDataOperationFetchCompletion)completion;
 
 /* Remove */
 

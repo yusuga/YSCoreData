@@ -46,14 +46,14 @@ typedef void(^YSCoreDataOperationFetchCompletion)(YSCoreDataOperation *operation
 
 /* Remove */
 
-- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                     error:(NSError**)errorPtr;
+- (BOOL)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                              error:(NSError**)errorPtr;
 
-- (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
-                                         error:(NSError**)errorPtr;
+- (BOOL)removeAllWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
+                                  error:(NSError**)errorPtr;
 
-- (void)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                completion:(YSCoreDataOperationCompletion)completion;
+- (void)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                         completion:(YSCoreDataOperationCompletion)completion;
 
 /* Others */
 
