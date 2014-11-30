@@ -31,44 +31,43 @@ typedef enum {
                             modelName:(NSString *)modelName
                             storeType:(NSString *)storeType;
 
+@property (nonatomic, readonly) NSString *databaseFullPath;
 @property (nonatomic, readonly) NSManagedObjectContext *mainContext;
 
-// sync
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                  error:(NSError **)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+/* Write */
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
+- (BOOL)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                      error:(NSError **)errorPtr;
+
+- (YSCoreDataOperation*)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                                 completion:(YSCoreDataOperationCompletion)completion;
+
+/* Fetch */
+
+- (NSArray*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                 error:(NSError **)errorPtr;
+
+- (YSCoreDataOperation*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                             completion:(YSCoreDataOperationFetchCompletion)completion;
+
+/* Remove */
+
+- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
                                      error:(NSError **)errorPtr;
 
-- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                         error:(NSError **)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+- (BOOL)removeAllObjectsWithError:(NSError **)errorPtr;
 
-- (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
-                     didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+- (YSCoreDataOperation*)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                                completion:(YSCoreDataOperationCompletion)completion;
 
-- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName;
+/* Count */
+
+- (NSUInteger)countObjectsWithEntitiyName:(NSString*)entityName;
 - (NSDictionary*)countAllEntitiesByName;
 
+/* Others */
+
 - (BOOL)deleteDatabase;
-
-// async
-
-- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                                  completion:(YSCoreDataOperationCompletion)completion
-                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
-
-- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                                 completion:(YSCoreDataOperationFetchCompletion)completion;
-
-- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                                        completion:(YSCoreDataOperationCompletion)completion
-                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
-
-// settings
-
-+ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec; // default: 30s, 0 == DISPATCH_TIME_FOREVER
 
 @end

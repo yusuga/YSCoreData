@@ -8,30 +8,53 @@
 
 #import "Utility.h"
 #import <TKRGuard/TKRGuard.h>
+#import <YSFileManager/YSFileManager.h>
+#import "TwitterRequest.h"
+#import "TwitterStorage.h"
 
-NSString * const kCoreDataSQLitePath = @"CoreData_SQLite.db";
-NSString * const kCoreDataBinaryPath = @"CoreData_Binary.db";
-NSString * const kTwitterStorageSQLitePath = @"Twitter_SQLite.db";
-NSString * const kTwitterStorageBinaryPath = @"Twitter_Binary.db";
+NSString * const kCoreDataSQLiteFileName = @"CoreData_SQLite.db";
+NSString * const kCoreDataBinaryFileName = @"CoreData_Binary.db";
+NSString * const kTwitterStorageSQLiteFileName = @"Twitter_SQLite.db";
+NSString * const kTwitterStorageBinaryFileName = @"Twitter_Binary.db";
 
 NSString * const kTwitterStorageOfMainBundlePath = @"Twitter.db";
 
 @implementation Utility
 
-+ (YSCoreData*)coreDataWithStoreType:(NSString*)storeType
++ (void)commonSettins
 {
-    return [[YSCoreData alloc] initWithDirectoryType:YSCoreDataDirectoryTypeDocument
-                                        databasePath:[self coreDataPathWithStoreType:storeType]
-                                           modelName:nil
-                                           storeType:storeType];
+    [TKRGuard setDefaultTimeoutInterval:30.];
 }
 
-+ (TwitterStorage*)twitterStorageWithStoreType:(NSString*)storeType
++ (void)cleanUpAllDatabase
+{
+    [[Utility coreDataWithStoreType:UtilityStoreTypeSQLite] deleteDatabase];
+    [[Utility coreDataWithStoreType:UtilityStoreTypeBinary] deleteDatabase];
+    
+    [[Utility twitterStorageWithStoreType:UtilityStoreTypeSQLite] deleteDatabase];
+    [[Utility twitterStorageWithStoreType:UtilityStoreTypeBinary] deleteDatabase];
+    
+    [self removeAllObjectsOfCoreData:[Utility twitterStorageOfMainBundle]];
+    [self removeAllObjectsOfCoreData:[Utility coreDataWithStoreType:UtilityStoreTypeInMemory]];
+    [self removeAllObjectsOfCoreData:[Utility twitterStorageWithStoreType:UtilityStoreTypeInMemory]];
+    
+    [[TwitterStorage sharedInstance] deleteDatabase];
+}
+
++ (YSCoreData*)coreDataWithStoreType:(UtilityStoreType)storeType
+{
+    return [[YSCoreData alloc] initWithDirectoryType:YSCoreDataDirectoryTypeDocument
+                                        databasePath:[self coreDataFileNameWithStoreType:storeType]
+                                           modelName:nil
+                                           storeType:[self coreDataStoreTypeWithStoreType:storeType]];
+}
+
++ (TwitterStorage*)twitterStorageWithStoreType:(UtilityStoreType)storeType
 {
     return [[TwitterStorage alloc] initWithDirectoryType:YSCoreDataDirectoryTypeDocument
-                                            databasePath:[self twitterStoragePathWithStoreType:storeType]
+                                            databasePath:[self twitterStorageFileNameWithStoreType:storeType]
                                                modelName:nil
-                                               storeType:storeType];
+                                               storeType:[self coreDataStoreTypeWithStoreType:storeType]];
 }
 
 + (TwitterStorage*)twitterStorageOfMainBundle
@@ -42,54 +65,139 @@ NSString * const kTwitterStorageOfMainBundlePath = @"Twitter.db";
                                                storeType:NSSQLiteStoreType];
 }
 
-+ (NSString*)coreDataPathWithStoreType:(NSString*)storeType
++ (NSArray *)allStoreType
 {
-    if ([storeType isEqualToString:NSSQLiteStoreType]) {
-        return kCoreDataSQLitePath;
-    } else {
-        return kCoreDataBinaryPath;
+    NSMutableArray *types = [NSMutableArray arrayWithCapacity:UtilityStoreType_MAX];
+    for (NSUInteger type = 0; type < UtilityStoreType_MAX; type++) {
+        [types addObject:@(type)];
+    }
+    return [NSArray arrayWithArray:types];
+}
+
++ (void)enumerateAllCoreDataUsingBlock:(void(^)(YSCoreData *coreData))block
+{
+    for (NSUInteger type = 0; type < UtilityStoreType_MAX; type++) {
+        block([Utility coreDataWithStoreType:type]);
     }
 }
 
-+ (NSString*)twitterStoragePathWithStoreType:(NSString*)storeType
++ (void)enumerateAllTwitterStorageUsingBlock:(void(^)(TwitterStorage *twitterStorage))block
 {
-    if ([storeType isEqualToString:NSSQLiteStoreType]) {
-        return kCoreDataSQLitePath;
-    } else {
-        return kCoreDataBinaryPath;
+    for (NSUInteger type = 0; type < UtilityStoreType_MAX; type++) {
+        block([Utility twitterStorageWithStoreType:type]);
+    }
+    block([Utility twitterStorageOfMainBundle]);
+}
+
++ (void)enumerateStoreTypeUsingBlock:(void(^)(UtilityStoreType type))block
+{
+    for (NSUInteger type = 0; type < UtilityStoreType_MAX; type++) {
+        block(type);
     }
 }
 
-+ (void)cleanUpAllDatabase
++ (NSString*)coreDataFileNameWithStoreType:(UtilityStoreType)storeType
 {
-    [[Utility coreDataWithStoreType:NSSQLiteStoreType] deleteDatabase];
-    [[Utility coreDataWithStoreType:NSBinaryStoreType] deleteDatabase];
-    
-    [[Utility twitterStorageWithStoreType:NSSQLiteStoreType] deleteDatabase];
-    [[Utility twitterStorageWithStoreType:NSBinaryStoreType] deleteDatabase];
-    
-    [self removeAllObjectsOfCoreData:[Utility twitterStorageOfMainBundle]];
-    [self removeAllObjectsOfCoreData:[Utility coreDataWithStoreType:NSInMemoryStoreType]];
-    [self removeAllObjectsOfCoreData:[Utility twitterStorageWithStoreType:NSInMemoryStoreType]];
+    switch (storeType) {
+        case UtilityStoreTypeSQLite:
+            return kCoreDataSQLiteFileName;
+        case UtilityStoreTypeBinary:
+            return kCoreDataBinaryFileName;
+        case UtilityStoreTypeInMemory:
+            return nil;
+        default:
+            NSAssert1(false, @"storeType = %zd", storeType);
+            abort();
+            break;
+    }
+}
 
++ (NSString*)twitterStorageFileNameWithStoreType:(UtilityStoreType)storeType
+{
+    switch (storeType) {
+        case UtilityStoreTypeSQLite:
+            return kTwitterStorageSQLiteFileName;
+        case UtilityStoreTypeBinary:
+            return kTwitterStorageBinaryFileName;
+        case UtilityStoreTypeInMemory:
+            return nil;
+        default:
+            NSAssert1(false, @"storeType = %zd", storeType);
+            abort();
+            break;
+    }
+}
+
++ (NSString*)coreDataStoreTypeWithStoreType:(UtilityStoreType)storeType
+{
+    switch (storeType) {
+        case UtilityStoreTypeSQLite:
+            return NSSQLiteStoreType;
+        case UtilityStoreTypeBinary:
+            return NSBinaryStoreType;
+        case UtilityStoreTypeInMemory:
+            return NSInMemoryStoreType;
+        default:
+            NSAssert1(false, @"storeType = %zd", storeType);
+            abort();
+            break;
+    }
+}
+
++ (NSString*)coreDataDocumentPathWithStoreType:(UtilityStoreType)storeType
+{
+    return [YSFileManager documentDirectoryWithAppendingPathComponent:[Utility coreDataFileNameWithStoreType:storeType]];
+}
+
++ (NSString*)twitterStorageDocumentPathWithStoreType:(UtilityStoreType)storeType
+{
+    return [YSFileManager documentDirectoryWithAppendingPathComponent:[Utility twitterStorageFileNameWithStoreType:storeType]];
+}
+
++ (NSString*)twitterStorageMainBundlePath
+{
+    return [[NSBundle mainBundle] pathForResource:kTwitterStorageOfMainBundlePath ofType:nil];
 }
 
 + (void)removeAllObjectsOfCoreData:(YSCoreData*)coreData
 {
-    NSString *key = @"remove";
     NSError *error = nil;
-    [coreData removeAllObjectsWithError:&error didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
-        NSAssert1(error == nil, @"error: %@", error);
-        [TKRGuard resumeForKey:key];
-    }];
+    [coreData removeAllObjectsWithError:&error];
     NSAssert1(error == nil, @"error: %@", error);
-    [TKRGuard waitForKey:key];
 }
 
-+ (void)commonSettins
++ (NSArray*)tweetsWithCount:(int64_t)count
 {
-    [TKRGuard setDefaultTimeoutInterval:30.];
-    [YSCoreData setCommonOperationTimeoutPerSec:kYSCoreDataOperationDefaultTimeoutPerSec];
+    NSMutableArray *objs = [NSMutableArray arrayWithCapacity:count];
+    for (int64_t i = 0; i < count; i++) {
+        [objs addObject:[TwitterRequest tweetWithTweetID:i
+                                                  userID:i]];
+    }
+    return [NSArray arrayWithArray:objs];
+}
+
++ (void)addTweetsWithTwitterStorage:(TwitterStorage*)storage
+                              count:(int64_t)count
+{
+    [self addTweetWithTwitterStorage:storage tweetJsonObjects:[self tweetsWithCount:count]];
+}
+
++ (void)addTweetWithTwitterStorage:(TwitterStorage*)storage
+                  tweetJsonObjects:(NSArray*)tweetJsonObjects
+{
+    NSError *error = nil;
+    [storage insertTweetsWithTweetJsons:tweetJsonObjects error:&error];
+    NSAssert1(error == nil, @"error: %@", error);
+}
+
++ (NSArray*)fetchAllTweetsWithTwitterStorage:(TwitterStorage*)twitterStorage
+{
+    NSError *error = nil;
+    NSArray *tweets = [twitterStorage fetchTweetsWithLimit:0
+                                                     maxId:0
+                                                     error:&error];
+    NSAssert1(error == nil, @"error: %@", error);
+    return tweets;
 }
 
 @end

@@ -8,15 +8,19 @@
 
 #import <Foundation/Foundation.h>
 
-typedef void(^RequestTwitterCompletion)(NSArray *newTweets);
-
 @interface TwitterRequest : NSObject
 
-+ (void)requestTweetsWithMaxCount:(NSUInteger)maxCount completion:(RequestTwitterCompletion)completion;
-+ (void)requestTweetsWithCount:(NSUInteger)count completion:(RequestTwitterCompletion)completion;
++ (NSArray*)requestTweetsWithMaxCount:(NSUInteger)maxCount;
++ (NSArray*)requestTweetsWithCount:(NSUInteger)count;
 + (void)resetState;
 
-+ (NSArray*)userNames;
-+ (NSArray*)screenNames;
++ (NSDictionary*)tweetWithTweetID:(int64_t)tweetID
+                           userID:(int64_t)userID;
+
++ (NSDictionary*)tweetWithTweetID:(int64_t)tweetID
+                             text:(NSString*)text
+                           userID:(int64_t)userID
+                             name:(NSString*)name
+                       screenName:(NSString*)screenName;
 
 @end

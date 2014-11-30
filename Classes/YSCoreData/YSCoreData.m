@@ -13,10 +13,10 @@
 @property (nonatomic) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 @property (nonatomic) NSManagedObjectModel *managedObjectModel;
 @property (nonatomic, copy) NSString *modelName;
-@property (nonatomic) NSManagedObjectContext *privateWriterContext;
+@property (nonatomic) NSManagedObjectContext *writerContext;
 @property (nonatomic) NSString *storeType;
 
-@property (nonatomic) NSString *databaseFullPath;
+@property (nonatomic, readwrite) NSString *databaseFullPath;
 
 @end
 
@@ -46,7 +46,7 @@
         self.databaseFullPath = [self databaseFullPathWithDirectoryType:directoryType databasePath:databasePath];
         self.modelName = modelName;
         self.storeType = storeType;
-        [self privateWriterContext]; // setup
+        [self writerContext]; // setup
     }
     return self;
 }
@@ -108,7 +108,7 @@
     [fileManager removeItemAtPath:[path stringByAppendingString:@"-shm"] error:NULL];
     [fileManager removeItemAtPath:[path stringByAppendingString:@"-wal"] error:NULL];
     
-    self.privateWriterContext = nil;
+    self.writerContext = nil;
     _mainContext = nil;
     self.persistentStoreCoordinator = nil;
     return ret;
@@ -129,100 +129,85 @@
 
 #pragma mark - write
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                  error:(NSError **)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                      error:(NSError *__autoreleasing *)errorPtr
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
-    
-    return [ope writeWithConfigureManagedObject:configure error:errorPtr didSaveStore:didSaveStore];
+                                                                       writerContext:self.writerContext];
+    return [ope writeWithWriteBlock:writeBlock error:errorPtr];
 }
 
-- (YSCoreDataOperation*)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                                  completion:(YSCoreDataOperationCompletion)completion
-                                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (YSCoreDataOperation*)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                                 completion:(YSCoreDataOperationCompletion)completion
 {
-    NSManagedObjectContext *tempContext = [self newTemporaryContext];
-    
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:[self newTemporaryContext]
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
-    [ope asyncWriteWithConfigureManagedObject:configure
-                                   completion:completion
-                                 didSaveStore:didSaveStore];
+                                                                       writerContext:self.writerContext];
+    [ope writeWithWriteBlock:writeBlock completion:completion];
     return ope;
 }
 
 #pragma mark - fetch
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                     error:(NSError **)errorPtr
+- (NSArray*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                 error:(NSError *__autoreleasing *)errorPtr
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
+                                                                writerContext:self.writerContext];
     
-    return [ope fetchWithConfigureFetchRequest:configure error:errorPtr];
+    return [ope fetchWithFetchRequestBlock:fetchRequestBlock error:errorPtr];
 }
 
-- (YSCoreDataOperation*)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                                 completion:(YSCoreDataOperationFetchCompletion)completion
+- (YSCoreDataOperation*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                             completion:(YSCoreDataOperationFetchCompletion)completion
 {
-    NSManagedObjectContext *tempContext = [self newTemporaryContext];
-    
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:[self newTemporaryContext]
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
-    [ope asyncFetchWithConfigureFetchRequest:configure
-                                  completion:completion];
+                                                                       writerContext:self.writerContext];
+    
+    [ope fetchWithFetchRequestBlock:fetchRequestBlock completion:completion];
     return ope;
 }
 
 #pragma mark - remove
 
-- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                         error:(NSError **)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                     error:(NSError *__autoreleasing *)errorPtr
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
+                                                                       writerContext:self.writerContext];
     
-    return [ope removeObjectsWithConfigureFetchRequest:configure error:errorPtr didSaveStore:didSaveStore];
+    return [ope removeObjectsWithFetchRequestBlock:fetchRequestBlock error:errorPtr];
 }
 
 - (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
-                     didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
+                                                                       writerContext:self.writerContext];
     
-    return [ope removeAllObjectsWithManagedObjectModel:self.managedObjectModel error:errorPtr didSaveStore:didSaveStore];
+    return [ope removeAllObjectsWithManagedObjectModel:self.managedObjectModel error:errorPtr];
 }
 
-- (YSCoreDataOperation*)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                                        completion:(YSCoreDataOperationCompletion)completion
-                                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (YSCoreDataOperation*)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                                completion:(YSCoreDataOperationCompletion)completion
 {
-    NSManagedObjectContext *tempContext = [self newTemporaryContext];
-    
-    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:tempContext
+    YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:[self newTemporaryContext]
                                                                          mainContext:self.mainContext
-                                                                privateWriterContext:self.privateWriterContext];
-    [ope asyncRemoveRecordWithConfigureFetchRequest:configure
-                                         completion:completion
-                                       didSaveStore:didSaveStore];
+                                                                       writerContext:self.writerContext];
+    
+    [ope removeObjectsWithFetchRequestBlock:fetchRequestBlock completion:completion];
     return ope;
 }
 
 #pragma mark - count
 
-- (NSUInteger)countRecordWithEntitiyName:(NSString*)entityName
+- (NSUInteger)countObjectsWithEntitiyName:(NSString*)entityName
 {
-    return [self countRecordWithContext:self.mainContext entitiyName:entityName];
+    return [self countObjectsWithContext:self.mainContext entitiyName:entityName];
 }
 
 - (NSDictionary*)countAllEntitiesByName
@@ -230,12 +215,13 @@
     NSDictionary *allEntities = [self.managedObjectModel entitiesByName];
     NSMutableDictionary *countAllEntities = [NSMutableDictionary dictionaryWithCapacity:[allEntities count]];
     for (NSString *entityName in [allEntities allKeys]) {
-        [countAllEntities setObject:@([self countRecordWithEntitiyName:entityName]) forKey:entityName];
+        [countAllEntities setObject:@([self countObjectsWithEntitiyName:entityName]) forKey:entityName];
     }
     return countAllEntities;
 }
 
-- (NSUInteger)countRecordWithContext:(NSManagedObjectContext*)context entitiyName:(NSString*)entityName
+- (NSUInteger)countObjectsWithContext:(NSManagedObjectContext*)context
+                          entitiyName:(NSString*)entityName
 {
     NSFetchRequest* req = [[NSFetchRequest alloc] init];
     [req setEntity:[NSEntityDescription entityForName:entityName
@@ -288,14 +274,14 @@
     return _managedObjectModel;
 }
 
-- (NSManagedObjectContext *)privateWriterContext
+- (NSManagedObjectContext *)writerContext
 {
-    if (_privateWriterContext == nil) {
+    if (_writerContext == nil) {
         LOG_YSCORE_DATA(@"Init %s", __func__);
-        _privateWriterContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
-        _privateWriterContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
+        _writerContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        _writerContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
     }
-    return _privateWriterContext;
+    return _writerContext;
 }
 
 - (NSManagedObjectContext *)mainContext
@@ -303,16 +289,9 @@
     if (_mainContext == nil) {
         LOG_YSCORE_DATA(@"Init %s", __func__);
         _mainContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
-        _mainContext.parentContext = self.privateWriterContext;
+        _mainContext.parentContext = self.writerContext;
     }
     return _mainContext;
-}
-
-#pragma mark - settings
-
-+ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec
-{
-    [YSCoreDataOperation setCommonOperationTimeoutPerSec:perSec];
 }
 
 @end

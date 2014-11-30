@@ -25,17 +25,15 @@
 #pragma mark - insert
 
 - (BOOL)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
-                             error:(NSError**)error
-                     didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+                             error:(NSError**)errorPtr
 {
-    return [self writeWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+    return [self writeWithWriteBlock:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         [self insertTweetsWithContext:context operation:operation tweetJsons:tweetJsons];
-    } error:error didSaveStore:didSaveStore];
+    } error:errorPtr];
 }
 
-- (YSCoreDataOperation*)asyncInsertTweetsWithTweetJsons:(NSArray*)tweetJsons
-                                             completion:(YSCoreDataOperationCompletion)completion
-                                          didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
+                                        completion:(YSCoreDataOperationCompletion)completion
 {
     if (![tweetJsons isKindOfClass:[NSArray class]]) {
         NSAssert1(0, @"%s; tweetJsons is not NSArray class;", __func__);
@@ -43,11 +41,11 @@
         return nil;
     }
     
-    return [self asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context,
+    return [self writeWithWriteBlock:^(NSManagedObjectContext *context,
                                                         YSCoreDataOperation *operation)
             {
                 [self insertTweetsWithContext:context operation:operation tweetJsons:tweetJsons];
-            } completion:completion didSaveStore:didSaveStore];
+            } completion:completion];
 }
 
 - (void)insertTweetsWithContext:(NSManagedObjectContext*)context
@@ -60,49 +58,46 @@
             return;
         }
         
-        NSNumber *tweetId = [tweetJson objectForKey:@"id"];
+        int64_t tweetID = [[tweetJson objectForKey:@"id"] longLongValue];
         
         // 同一IDのTweetがあるか
         NSFetchRequest *tweetsReq = [[NSFetchRequest alloc] init];
-        tweetsReq.predicate = [NSPredicate predicateWithFormat:@"id = %@", tweetId];
+        tweetsReq.predicate = [NSPredicate predicateWithFormat:@"id = %lld", tweetID];
         tweetsReq.entity = [NSEntityDescription entityForName:@"Tweet" inManagedObjectContext:context];
-        tweetsReq.resultType = NSCountResultType;
         NSError *error = nil;
-        NSArray *tweetsResults = [context executeFetchRequest:tweetsReq error:&error];
-        if ([((NSNumber*)[tweetsResults firstObject]) integerValue] > 0) {
+        Tweet *tweet = [[context executeFetchRequest:tweetsReq error:&error] firstObject];
+        if (tweet) {
             // 重複したTweetは保存しない
-            NSLog(@"Saved tweet %@ (%p)", tweetId, context);
+            NSLog(@"Saved tweet %lld (%p)", tweetID, context);
             continue;
         }
         
         // Tweetを作成
         NSDictionary *userJson = [tweetJson objectForKey:@"user"];
-        Tweet *tweet = (id)[NSEntityDescription insertNewObjectForEntityForName:@"Tweet"
-                                                         inManagedObjectContext:context];
-        tweet.id = tweetId;
+        tweet = (id)[NSEntityDescription insertNewObjectForEntityForName:@"Tweet"
+                                                  inManagedObjectContext:context];
+        tweet.id = tweetID;
         tweet.text = [tweetJson objectForKey:@"text"];
-        tweet.user_id = [userJson objectForKey:@"id"];
         
-        NSNumber *userId = [userJson objectForKey:@"id"];
+        int64_t userID = [[userJson objectForKey:@"id"] longLongValue];
         
         // 同一IDのUserがあるか
         NSFetchRequest *req = [[NSFetchRequest alloc] init];
-        req.predicate = [NSPredicate predicateWithFormat:@"id = %@", userId];
+        req.predicate = [NSPredicate predicateWithFormat:@"id = %lld", userID];
         req.entity = [NSEntityDescription entityForName:@"User" inManagedObjectContext:context];
         
         error = nil;
-        NSArray *fetchResults = [context executeFetchRequest:req error:&error];
-        User *user = [fetchResults firstObject];
+        User *user = [[context executeFetchRequest:req error:&error] firstObject];
         
         // 同一IDのUser(保存してたUser)があればUpdate。なければ新規のUesrをInsert
         if (user) {
-            NSLog(@"User update %@ (%p)", userId, context);
+            NSLog(@"User update %lld (%p)", userID, context);
         } else {
-            NSLog(@"User insert %@ (%p)", userId, context);
+            NSLog(@"User insert %lld (%p)", userID, context);
             // 新しいUserを作成
             user = (id)[NSEntityDescription insertNewObjectForEntityForName:@"User"
                                                      inManagedObjectContext:tweet.managedObjectContext];
-            user.id = userId;
+            user.id = userID;
             user.name = [userJson objectForKey:@"name"];
             user.screen_name = [userJson objectForKey:@"screen_name"];
         }
@@ -114,19 +109,19 @@
 #pragma mark - fetch
 
 - (NSArray*)fetchTweetsWithLimit:(NSUInteger)limit
-                           maxId:(NSNumber *)maxId
-                           error:(NSError**)error
+                           maxId:(int64_t)maxId
+                           error:(NSError**)errorPtr
 {
-    return [self fetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+    return [self fetchWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         return [self fetchTweetsRequestWithContext:context Limit:limit maxId:maxId];
-    } error:error];
+    } error:errorPtr];
 }
 
-- (YSCoreDataOperation*)asyncFetchTweetsLimit:(NSUInteger)limit
-                                        maxId:(NSNumber *)maxId
-                                   completion:(YSCoreDataOperationFetchCompletion)completion
+- (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
+                                   maxId:(int64_t)maxId
+                              completion:(YSCoreDataOperationFetchCompletion)completion
 {
-    return [self asyncFetchWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
+    return [self fetchWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context,
                                                                        YSCoreDataOperation *operation)
             {
                 return [self fetchTweetsRequestWithContext:context Limit:limit maxId:maxId];
@@ -135,12 +130,12 @@
 
 - (NSFetchRequest*)fetchTweetsRequestWithContext:(NSManagedObjectContext*)context
                                            Limit:(NSUInteger)limit
-                                           maxId:(NSNumber*)maxId
+                                           maxId:(int64_t)maxId
 {
     // 現在表示しているツイート(maxId)より新しいツイートを取得するリクエストを作成
     NSFetchRequest *request = [[NSFetchRequest alloc] init];
-    if (maxId) {
-        request.predicate = [NSPredicate predicateWithFormat:@"id > %@", maxId];
+    if (maxId > 0) {
+        request.predicate = [NSPredicate predicateWithFormat:@"id > %lld", maxId];
     }
     if (limit > 0) {
         request.fetchLimit = limit;
@@ -157,23 +152,19 @@
 
 #pragma mark - remove
 
-- (BOOL)removeAllTweetRecordWithError:(NSError**)error
-                        didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)removeAllTweetsWithError:(NSError**)errorPtr
 {
-    return [self removeObjectsWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation)
-            {
-                return [self removeAllTweetRecordRequestWithContext:context];
-            } error:error didSaveStore:didSaveStore];
+    __weak typeof(self) wself = self;
+    return [self removeObjectsWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        return [wself removeAllTweetRecordRequestWithContext:context];
+    } error:errorPtr];
 }
 
-- (YSCoreDataOperation*)asyncRemoveAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
-                                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (YSCoreDataOperation *)removeAllTweetsWithCompletion:(YSCoreDataOperationCompletion)completion
 {
-    return [self asyncRemoveRecordWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context,
-                                                                              YSCoreDataOperation *operation)
-            {
-                return [self removeAllTweetRecordRequestWithContext:context];
-            } completion:completion didSaveStore:didSaveStore];
+    return [self removeObjectsWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        return [self removeAllTweetRecordRequestWithContext:context];
+    } completion:completion];
 }
 
 - (NSFetchRequest*)removeAllTweetRecordRequestWithContext:(NSManagedObjectContext*)context
@@ -186,14 +177,14 @@
 
 #pragma mark - count
 
-- (NSUInteger)countTweetRecord
+- (NSUInteger)countTweetObjects
 {
-    return [self countRecordWithEntitiyName:@"Tweet"];
+    return [self countObjectsWithEntitiyName:@"Tweet"];
 }
 
-- (NSUInteger)countUserRecord
+- (NSUInteger)countUserObjects
 {
-    return [self countRecordWithEntitiyName:@"User"];
+    return [self countObjectsWithEntitiyName:@"User"];
 }
 
 @end

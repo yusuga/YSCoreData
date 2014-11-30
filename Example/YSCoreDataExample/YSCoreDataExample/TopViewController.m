@@ -27,8 +27,8 @@
     [super viewWillAppear:animated];
     
     TwitterStorage *ts = [TwitterStorage sharedInstance];
-    NSLog(@"count Tweet = %@", @([ts countTweetRecord]));
-    NSLog(@"count User = %@", @([ts countUserRecord]));
+    NSLog(@"count Tweet = %@", @([ts countTweetObjects]));
+    NSLog(@"count User = %@", @([ts countUserObjects]));
 }
 
 #pragma mark - Button action
@@ -59,16 +59,16 @@
              case 2:
              {
                  NSError *error = nil;
-                 BOOL success = [storage removeAllObjectsWithError:&error didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
-                     if (error) {
-                         [[[UIAlertView alloc] initWithTitle:@"Error: removeAllObjects"
-                                                     message:[error description]
-                                                    delegate:nil
-                                           cancelButtonTitle:@"OK"
-                                           otherButtonTitles:nil] show];
-                     }
-                 }];
-                 NSLog(@"removeAllObjects: %@", success ? @"success" : @"failure");
+                 if ([storage removeAllObjectsWithError:&error]) {
+                     NSLog(@"removeAllObjects: Success");
+                 } else {
+                     [[[UIAlertView alloc] initWithTitle:@"Error: removeAllObjects"
+                                                 message:[error description]
+                                                delegate:nil
+                                       cancelButtonTitle:@"OK"
+                                       otherButtonTitles:nil] show];
+                     NSLog(@"removeAllObjects: Failure");
+                 }
                  break;
              }
              case 3:
@@ -84,18 +84,18 @@
 - (void)removeTweets
 {
     NSLog(@"%s", __func__);
-    TwitterStorage *ts = [TwitterStorage sharedInstance];
     
     __weak typeof(self) wself = self;
-    [ts asyncRemoveAllTweetRecordWithCompletion:^(YSCoreDataOperation *operation, NSError *error) {
+    [[TwitterStorage sharedInstance] removeAllTweetsWithCompletion:^(YSCoreDataOperation *operation, NSError *error) {
         if (error) {
             NSLog(@"error %@", error);
             return ;
         }
         [wself removeFetchedResultsControllerCache];
-        NSLog(@">count Tweet = %@", @([ts countTweetRecord]));
-        NSLog(@">count User = %@", @([ts countUserRecord]));
-    } didSaveStore:nil];
+        
+        NSLog(@">count Tweet = %@", @([[TwitterStorage sharedInstance] countTweetObjects]));
+        NSLog(@">count User = %@", @([[TwitterStorage sharedInstance] countUserObjects]));
+    }];
 }
 
 - (IBAction)deleteDatabase

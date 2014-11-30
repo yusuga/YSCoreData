@@ -1,16 +1,40 @@
 PODS:
+  - CocoaLumberjack (2.0.0-beta4):
+    - CocoaLumberjack/Default
+    - CocoaLumberjack/Extensions
+  - CocoaLumberjack/Core (2.0.0-beta4)
+  - CocoaLumberjack/Default (2.0.0-beta4):
+    - CocoaLumberjack/Core
+  - CocoaLumberjack/Extensions (2.0.0-beta4):
+    - CocoaLumberjack/Default
+  - LumberjackConsole (2.4.2):
+    - CocoaLumberjack (>= 2.0.0-beta4)
+    - NBUCore (>= 2.0.3)
+  - NBUCore (2.0.4)
+  - NBULog (1.2.2):
+    - CocoaLumberjack (>= 2.0.0-beta4)
   - TKRGuard (1.0.2)
   - UIActionSheet+Blocks (0.8.1)
+  - YSCocoaLumberjackHelper (0.0.5):
+    - CocoaLumberjack
+    - LumberjackConsole
+    - NBULog
   - YSFileManager (0.0.3)
 
 DEPENDENCIES:
   - TKRGuard
   - UIActionSheet+Blocks
+  - YSCocoaLumberjackHelper
   - YSFileManager
 
 SPEC CHECKSUMS:
-  TKRGuard: 2f31216eec4810f656ba191a8de418e845fecaa3
-  UIActionSheet+Blocks: e95422625426ae57ab83193f1523c6d1e4d5fad8
+  CocoaLumberjack: 24153b24b17d853d7182b22b128971fb98e8cb18
+  LumberjackConsole: cb05e10656efd74bfbaf9b9cbec87d0412d2a634
+  NBUCore: 978f24fdc8d79dc8141032bf0121053e3b25c95c
+  NBULog: 50d789289ba22b1b44ef24a419031d8aae49b252
+  TKRGuard: 6d32f212e5d7fb55b6e849b1acc35873fa1f0cbb
+  UIActionSheet+Blocks: c8b9c02f3d08964e8f7a4202f004a639c15eab80
+  YSCocoaLumberjackHelper: 0f984b05f18387c544adfb18478e5575e4e6afba
   YSFileManager: 861157ba9b5dcdeebcf6240a9649f9604d460326
 
-COCOAPODS: 0.32.1
+COCOAPODS: 0.33.1

@@ -29,6 +29,5 @@ typedef enum {
 
 + (NSError*)cancelErrorWithType:(YSCoreDataErrorOperationType)operationType;
 + (NSError*)requiredArgumentIsNilErrorWithDescription:(NSString*)description;
-+ (NSError*)timeoutError;
 
 @end

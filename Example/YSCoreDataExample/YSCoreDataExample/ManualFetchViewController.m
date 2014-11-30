@@ -52,10 +52,10 @@
 {
     Tweet *tweet = [self.tweets firstObject];
     NSError *error = nil;
-    [[TwitterStorage sharedInstance] writeWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+    [[TwitterStorage sharedInstance] writeWithWriteBlock:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         tweet.text = @"UPDATE";
         tweet.user.name = @"NAME";
-    } error:&error didSaveStore:nil];
+    } error:&error];
     [self.tableView reloadData];
 }
 
@@ -65,7 +65,7 @@
     
     __weak typeof(self) wself = self;
     NSManagedObjectID *objectID = tweet.objectID;
-    [[TwitterStorage sharedInstance] asyncWriteWithConfigureManagedObject:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+    [[TwitterStorage sharedInstance] writeWithWriteBlock:^(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         NSFetchRequest *req = [[NSFetchRequest alloc] initWithEntityName:tweet.entity.name];
         req.predicate = [NSPredicate predicateWithFormat:@"self = %@", objectID];
         req.fetchLimit = 1;
@@ -77,8 +77,6 @@
     } completion:^(YSCoreDataOperation *operation, NSError *error) {
         NSAssert1(error == nil, @"error: %@", error);
         [wself.tableView reloadData];
-    } didSaveStore:^(YSCoreDataOperation *operation, NSError *error) {
-        NSAssert1(error == nil, @"error: %@", error);
     }];
 }
 
@@ -87,7 +85,7 @@
     // CoreDataからツイートを取得
     __weak typeof(self) wself = self;
     Tweet *tw = [self.tweets firstObject];
-    self.fetchOperation = [[TwitterStorage sharedInstance] asyncFetchTweetsLimit:10 maxId:tw.id completion:^(YSCoreDataOperation *operation, NSArray *tweets, NSError *error) {
+    self.fetchOperation = [[TwitterStorage sharedInstance] fetchTweetsLimit:10 maxId:tw.id completion:^(YSCoreDataOperation *operation, NSArray *tweets, NSError *error) {
         if (error) {
             NSLog(@"Failure: error = %@", error);
             return ;

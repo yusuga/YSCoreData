@@ -20,34 +20,30 @@ typedef void(^TwitterStorageFetchTweetsFailure)(NSError *error);
 // insert
 
 - (BOOL)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
-                             error:(NSError**)error
-                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+                             error:(NSError**)error;
 
-- (YSCoreDataOperation*)asyncInsertTweetsWithTweetJsons:(NSArray*)tweetJsons
-                                             completion:(YSCoreDataOperationCompletion)completion
-                                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+- (YSCoreDataOperation*)insertTweetsWithTweetJsons:(NSArray*)tweetJsons
+                                        completion:(YSCoreDataOperationCompletion)completion;
 
 // fetch
 
 - (NSArray*)fetchTweetsWithLimit:(NSUInteger)limit
-                           maxId:(NSNumber *)maxId
-                           error:(NSError**)error;
+                           maxId:(int64_t)maxId
+                           error:(NSError**)errorPtr;
 
-- (YSCoreDataOperation*)asyncFetchTweetsLimit:(NSUInteger)limit
-                                        maxId:(NSNumber *)maxId
-                                   completion:(YSCoreDataOperationFetchCompletion)completion;
+- (YSCoreDataOperation*)fetchTweetsLimit:(NSUInteger)limit
+                                   maxId:(int64_t)maxId
+                              completion:(YSCoreDataOperationFetchCompletion)completion;
 
 // remove
 
-- (BOOL)removeAllTweetRecordWithError:(NSError**)error
-                         didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+- (BOOL)removeAllTweetsWithError:(NSError**)errorPtr;
 
-- (YSCoreDataOperation*)asyncRemoveAllTweetRecordWithCompletion:(YSCoreDataOperationCompletion)completion
-                                                   didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+- (YSCoreDataOperation*)removeAllTweetsWithCompletion:(YSCoreDataOperationCompletion)completion;
 
 // count
 
-- (NSUInteger)countTweetRecord;
-- (NSUInteger)countUserRecord;
+- (NSUInteger)countTweetObjects;
+- (NSUInteger)countUserObjects;
 
 @end

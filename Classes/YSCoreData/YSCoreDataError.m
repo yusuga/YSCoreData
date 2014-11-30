@@ -46,9 +46,4 @@ NSString * const YSCoreDataErrorDomain = @"YSCoreDataErrorDomain";
     return [self errorWithCode:YSCoreDataErrorCodeRequiredArgumentIsNil description:description];
 }
 
-+ (NSError *)timeoutError
-{
-    return [self errorWithCode:YSCoreDataErrorCodeTimeout description:nil];
-}
-
 @end

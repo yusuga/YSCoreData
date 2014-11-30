@@ -9,27 +9,16 @@
 #import "YSCoreDataOperation.h"
 #import <objc/message.h>
 
-static int64_t __operationTimeoutPerSec;
-int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
-
 @interface YSCoreDataOperation ()
 
 @property (nonatomic) NSManagedObjectContext *temporaryContext;
 @property (nonatomic) NSManagedObjectContext *mainContext;
-@property (nonatomic) NSManagedObjectContext *privateWriterContext;
-
-@property (nonatomic) SEL configureSelector;
+@property (nonatomic) NSManagedObjectContext *writerContext;
 
 @end
 
 @implementation YSCoreDataOperation
 @synthesize isCancelled = _isCancelled;
-@synthesize isCompleted = _isCompleted;
-
-+ (void)initialize
-{
-    __operationTimeoutPerSec = kYSCoreDataOperationDefaultTimeoutPerSec;
-}
 
 + (dispatch_queue_t)operationDispatchQueue
 {
@@ -41,153 +30,95 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
     return __queue;
 }
 
-+ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec
-{
-    __operationTimeoutPerSec = perSec;
-}
-
-+ (BOOL)setWriteLock:(BOOL)lock
-{
-    static dispatch_semaphore_t __semaphore;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        __semaphore = dispatch_semaphore_create(1);
-    });
-    
-    if (lock) {
-        dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW,
-                                             __operationTimeoutPerSec * NSEC_PER_SEC);
-        if (dispatch_semaphore_wait(__semaphore, __operationTimeoutPerSec == 0 ? DISPATCH_TIME_FOREVER : time) == 0) {
-            return YES;
-        } else {
-            NSLog(@"%s, timeout: %zds", __func__, __operationTimeoutPerSec);
-            return NO;
-        }
-    } else {
-        dispatch_semaphore_signal(__semaphore);
-        return YES;
-    }
-}
-
 #pragma mark -
 
-- (id)init
+- (instancetype)init
 {
     abort();
 }
 
-- (id)initWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
-                   mainContext:(NSManagedObjectContext*)mainContext
-          privateWriterContext:(NSManagedObjectContext*)privateWriterContext
+- (instancetype)initWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
+                             mainContext:(NSManagedObjectContext*)mainContext
+                           writerContext:(NSManagedObjectContext*)writerContext
 {
-    if (temporaryContext == nil || mainContext == nil || privateWriterContext == nil) {
-        NSAssert3(0, @"context is nil; temporaryContext: %@, mainContext: %@, privateWriterContext: %@", temporaryContext, mainContext, privateWriterContext);
+    NSParameterAssert(temporaryContext != nil);
+    NSParameterAssert(mainContext != nil);
+    NSParameterAssert(writerContext != nil);
+    
+    if (temporaryContext == nil || mainContext == nil || writerContext == nil) {
         return nil;
     }
     
     if (self = [super init]) {
         self.temporaryContext = temporaryContext;
         self.mainContext = mainContext;
-        self.privateWriterContext = privateWriterContext;
+        self.writerContext = writerContext;
     }
     return self;
 }
 
-#pragma mark - write
+#pragma mark - Write
+#pragma mark Sync
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                  error:(NSError**)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                      error:(NSError**)errorPtr
 {
-    if (configure == nil) {
-        NSError *coreDataError = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
-        if (errorPtr != NULL) {
-            *errorPtr = coreDataError;
-        }
-        if (didSaveStore) didSaveStore(self, coreDataError);
-        return NO;
-    }
-    configure(self.mainContext, self);
-    return [self saveMainContextWithSave:errorPtr didSaveStore:didSaveStore];
+    NSParameterAssert([NSThread isMainThread]);
+    NSParameterAssert(writeBlock);
+    
+    writeBlock(self.mainContext, self);
+    return [self saveMainContextWithError:errorPtr];
 }
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                  completion:(YSCoreDataOperationCompletion)completion
-                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+#pragma mark Async
+
+- (void)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                 completion:(YSCoreDataOperationCompletion)completion
 {
+    NSParameterAssert(writeBlock);
+    
     __strong typeof(self) strongSelf = self;
     dispatch_async([[self class] operationDispatchQueue], ^{
-        if ([[strongSelf class] setWriteLock:YES]) {
-            [strongSelf.temporaryContext performBlock:^{
-                if (configure) {
-                    configure(strongSelf.temporaryContext, strongSelf);
-                    
-                    if (strongSelf.isCancelled) {
-                        LOG_YSCORE_DATA(@"Cancel: asyncWrite");
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
-                            if (completion) completion(strongSelf, error);
-                            if (didSaveStore) didSaveStore(strongSelf, error);
-                        });
-                        [[strongSelf class] setWriteLock:NO];
-                        return ;
-                    }
-                } else {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        NSError *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"Write setting is nil"];
-                        if (completion) completion(strongSelf, error);
-                        if (didSaveStore) didSaveStore(strongSelf, error);
-                    });
-                    [[strongSelf class] setWriteLock:NO];
-                    return ;
-                }
-                
-                [strongSelf asyncSaveTemporaryContextWithDidMergeMainContext:^(YSCoreDataOperation *operation, NSError *error) {
-                    [[strongSelf class] setWriteLock:NO];
-                    if (completion) completion(operation, error);
-                } didSaveStore:didSaveStore];
-            }];
-        } else {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                NSError *error = [YSCoreDataError timeoutError];
-                if (completion) completion(strongSelf, error);
-                if (didSaveStore) didSaveStore(strongSelf, error);
-            });
-        }
+        [strongSelf.temporaryContext performBlock:^{
+            writeBlock(strongSelf.temporaryContext, strongSelf);
+            
+            if (strongSelf.isCancelled) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
+                    if (completion) completion(strongSelf, error);
+                    if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
+                });
+            } else {
+                [strongSelf saveTemporaryContextWithDidMergeMainContext:completion];
+            }
+        }];
     });
 }
 
-#pragma mark - fetch
+#pragma mark - Fetch
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                     error:(NSError**)errorPtr
+- (NSArray*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                 error:(NSError**)errorPtr
 {
-    return [self executeFetchWithContext:self.mainContext
-                  configureFetchRequest:configure
-                                  error:errorPtr];
+    NSParameterAssert(fetchRequestBlock);
+    
+    return [self executeFetchRequestWithContext:self.mainContext
+                              fetchRequestBlock:fetchRequestBlock
+                                          error:errorPtr];
 }
 
-- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                 completion:(YSCoreDataOperationFetchCompletion)completion
+- (void)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                        completion:(YSCoreDataOperationFetchCompletion)completion
 {
     __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
-        NSArray *results = [strongSelf executeFetchWithContext:strongSelf.temporaryContext
-                                         configureFetchRequest:configure
-                                                         error:&error];
+        NSArray *results = [strongSelf executeFetchRequestWithContext:strongSelf.temporaryContext
+                                                    fetchRequestBlock:fetchRequestBlock
+                                                                error:&error];
         if (error) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (completion) completion(strongSelf, nil, error);
-            });
-            return;
-        }
-        
-        if ([results count] == 0) {
-            LOG_YSCORE_DATA(@"Fetch result is none");
-            [strongSelf setCompleted:YES];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion) completion(strongSelf, results, nil);
             });
             return;
         }
@@ -224,9 +155,9 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
              */
             
             NSMutableArray *fetchResults = [NSMutableArray arrayWithCapacity:[ids count]];
-            for (NSManagedObjectID *objId in ids) {
+            for (NSManagedObjectID *objID in ids) {
                 NSError *error = nil;
-                NSManagedObject *obj = [strongSelf.mainContext existingObjectWithID:objId error:&error];
+                NSManagedObject *obj = [strongSelf.mainContext existingObjectWithID:objID error:&error];
                 if (obj == nil || error) {
                     NSLog(@"Error: Fetch; error = %@;", error);
                     if (completion) completion(strongSelf, nil, error);
@@ -236,152 +167,139 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
             }
             LOG_YSCORE_DATA(@"Success: Fetch %@", @([fetchResults count]));
             
-            [self setCompleted:YES];
-            if (completion) completion(strongSelf, fetchResults, nil);
+            if (completion) completion(strongSelf, [NSArray arrayWithArray:fetchResults], nil);
         }];
     }];
 }
 
 #pragma mark - remove
+#pragma mark Sync
 
-- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                         error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                     error:(NSError**)errorPtr
 {
+    NSParameterAssert([NSThread isMainThread]);
+    
     NSError *error = nil;
-    if ([self removeObjectsWithConfigureFetchRequest:configure error:&error]) {
-        [self saveMainContextWithSave:errorPtr didSaveStore:didSaveStore];
+    if ([self removeObjectsWithContext:self.mainContext fetchRequestBlock:fetchRequestBlock error:&error]) {
+        [self saveMainContextWithError:errorPtr];
         return YES;
     } else {
-        if (errorPtr != NULL) *errorPtr = error;
-        if (didSaveStore) didSaveStore(self, error);
+        if (errorPtr) *errorPtr = error;
+        if (self.didSaveStore) self.didSaveStore(self, error);
         return NO;
     }
 }
 
 - (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
                                          error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
 {
+    NSParameterAssert([NSThread isMainThread]);
+    
     for (NSEntityDescription *entity in [managedObjectModel entities]) {
         NSError *error = nil;
-        BOOL success = [self removeObjectsWithConfigureFetchRequest:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation)
-                        {
-                            NSFetchRequest *req = [[NSFetchRequest alloc] init];
-                            req.entity = entity;
-                            return req;
-                        } error:&error];
-        
-        if (!success) {
+        if (![self removeObjectsWithContext:self.mainContext fetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+            NSFetchRequest *req = [[NSFetchRequest alloc] init];
+            req.entity = entity;
+            return req;
+        } error:&error]) {
             if (error && errorPtr != NULL) {
                 *errorPtr = error;
             }
-            if (didSaveStore) didSaveStore(self, error);
+            if (self.didSaveStore) self.didSaveStore(self, error);
             return NO;
         }
     }
-    [self saveMainContextWithSave:errorPtr didSaveStore:didSaveStore];
-    return YES;
+    
+    return [self saveMainContextWithError:errorPtr];
 }
 
-- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                         error:(NSError**)errorPtr
+#pragma mark Async
+
+- (void)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                completion:(YSCoreDataOperationCompletion)completion
+{
+    NSParameterAssert(fetchRequestBlock);
+    
+    __strong typeof(self) strongSelf = self;
+    dispatch_async([[self class] operationDispatchQueue], ^{
+        [strongSelf.temporaryContext performBlock:^{
+            NSError *error = nil;
+            if (![strongSelf removeObjectsWithContext:strongSelf.temporaryContext fetchRequestBlock:fetchRequestBlock error:&error]) {
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (completion) completion(strongSelf, error);
+                    if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
+                });
+                return ;
+            }
+            
+            if (strongSelf.isCancelled) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
+                    if (completion) completion(strongSelf, error);
+                    if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
+                });
+            } else {
+                [strongSelf saveTemporaryContextWithDidMergeMainContext:completion];
+            }
+        }];
+    });
+}
+
+#pragma mark Private
+
+- (BOOL)removeObjectsWithContext:(NSManagedObjectContext*)context
+               fetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                           error:(NSError**)errorPtr
 {
     NSError *error = nil;
-    NSArray *results = [self executeFetchWithContext:self.mainContext configureFetchRequest:configure error:&error];
+    NSArray *results = [self executeFetchRequestWithContext:context fetchRequestBlock:fetchRequestBlock error:&error];
+    
     if (error) {
-        if (errorPtr != NULL) {
-            *errorPtr = error;
-        }
+        if (errorPtr) *errorPtr = error;
         return NO;
     }
     for (NSManagedObject *obj in results) {
-        [self.mainContext deleteObject:obj];
+        [context deleteObject:obj];
     }
     return YES;
 }
 
-- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                        completion:(YSCoreDataOperationCompletion)completion
-                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
-{
-    __strong typeof(self) strongSelf = self;
-    [self.temporaryContext performBlock:^{
-        NSError *error = nil;
-        NSArray *results = [self executeFetchWithContext:self.temporaryContext
-                                  configureFetchRequest:configure
-                                                  error:&error];
-        if (error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion) completion(strongSelf, error);
-                if (didSaveStore) didSaveStore(strongSelf, error);
-            });
-            return;
-        }
-        
-        for (NSManagedObject *manaObj in results) {
-            [self.temporaryContext deleteObject:manaObj];
-        }
-        
-        if (self.isCancelled) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                LOG_YSCORE_DATA(@"Cancel: asycnRemove; did deleteObject;");
-                NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
-                if (completion) completion(strongSelf, error);
-                if (didSaveStore) didSaveStore(strongSelf, error);
-            });
-            return;
-        }
-        
-        [self asyncSaveTemporaryContextWithDidMergeMainContext:completion
-                                                  didSaveStore:didSaveStore];
-    }];
-}
+#pragma mark - Execute
 
-#pragma mark - execute
-
-- (NSArray*)executeFetchWithContext:(NSManagedObjectContext*)context
-             configureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                             error:(NSError**)error
+- (NSArray*)executeFetchRequestWithContext:(NSManagedObjectContext*)context
+                         fetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                     error:(NSError**)errorPtr
 {
-    NSFetchRequest *req;
-    if (configure) {
-        req = configure(context, self);
-        
-        if (req == nil) {
-            NSString *desc = @"Fetch request is nil";
-            if (error != NULL) {
-                *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
-            }
-            return nil;
-        }
-    } else {
-        NSString *desc = @"Fetch configure is nil";
-        if (error != NULL) {
-            *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
+    NSFetchRequest *req = fetchRequestBlock(context, self);
+    if (req == nil) {
+        NSString *desc = @"Fetch request is nil";
+        if (errorPtr != NULL) {
+            *errorPtr = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
         }
         return nil;
     }
     
     if (self.isCancelled) {
         LOG_YSCORE_DATA(@"Cancel: asyncFetch; will execute fetch request;");
-        if (error != NULL) {
-            *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
+        if (errorPtr) {
+            *errorPtr = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
         }
         return nil;
     }
     
-    NSArray *results = [context executeFetchRequest:req error:error];
+    NSArray *results = [context executeFetchRequest:req error:errorPtr];
     
-    if (error && *error) {
+    if (errorPtr && *errorPtr) {
         LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", *error);
         return nil;
     }
     
     if (self.isCancelled) {
         LOG_YSCORE_DATA(@"Cancel: asyncFetch; did execute fetch request;");
-        if (error != NULL) {
-            *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
+        if (errorPtr) {
+            *errorPtr = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
         }
         return nil;
     }
@@ -389,85 +307,59 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
     return results;
 }
 
-#pragma mark - save
+#pragma mark - Save
 
-- (BOOL)saveMainContextWithSave:(NSError**)errorPtr didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)saveContext:(NSManagedObjectContext*)context withError:(NSError**)errorPtr
 {
-    NSError *error = nil;
-    [self.mainContext save:&error];
-    if (error) {
-        if (errorPtr != NULL) {
-            *errorPtr = error;
-        }
-        if (didSaveStore) didSaveStore(self, error);
-        return NO;
+    if (!context.hasChanges) {
+        return YES;
     }
-    [self setCompleted:YES];
-    [self asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
-    return YES;
+    return [context save:errorPtr];
 }
 
-- (void)asyncSaveTemporaryContextWithDidMergeMainContext:(YSCoreDataOperationCompletion)didMergeMainContext
-                                            didSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (void)saveTemporaryContextWithDidMergeMainContext:(YSCoreDataOperationCompletion)didMergeMainContext
 {
-    /*
-     temporaryContextの-performBlock:から呼び出されることを前提としている
-     */
-    
     __strong typeof(self) strongSelf = self;
-    
-    // コンテキストが変更されていなければ保存しない
-    if (!self.temporaryContext.hasChanges) {
-        LOG_YSCORE_DATA(@"temporaryContext.hasChanges == NO");
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [strongSelf setCompleted:YES];
-            if (didMergeMainContext) didMergeMainContext(strongSelf, nil);
-            if (didSaveStore) didSaveStore(strongSelf, nil);
-        });
-        return;
-    }
-    
-    NSError *error = nil;
-    LOG_YSCORE_DATA(@"Will save temporaryContext");
-    if (![self.temporaryContext save:&error]) { // mainContextに変更をプッシュ(マージされる)
-        dispatch_async(dispatch_get_main_queue(), ^{
-            NSLog(@"Error: temporaryContext save; error = %@;", error);
-            if (didMergeMainContext) didMergeMainContext(strongSelf, error);
-            if (didSaveStore) didSaveStore(strongSelf, error);
-        });
-        return;
-    }
-    LOG_YSCORE_DATA(@"Did save temporaryContext");
-    [self.mainContext performBlock:^{
-        [strongSelf setCompleted:YES];
-        if (didMergeMainContext) didMergeMainContext(strongSelf, nil);
+    [self.temporaryContext performBlock:^{
         NSError *error = nil;
-        if (![strongSelf.mainContext save:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
-            NSLog(@"Error: mainContext save; error = %@;", error);
-            if (didSaveStore) didSaveStore(strongSelf, error);
-            return ;
-        }
-        LOG_YSCORE_DATA(@"Did save mainContext");
-        [strongSelf asyncSavePrivateWriterContextWithdidSaveStore:didSaveStore];
+        [strongSelf saveContext:strongSelf.temporaryContext withError:&error]; // mainContextに変更をプッシュ(マージされる)
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (didMergeMainContext) {
+                didMergeMainContext(strongSelf, error);
+            }
+            if (error == nil) {
+                [strongSelf saveMainContextWithError:NULL];
+            }
+        });
     }];
 }
 
-- (void)asyncSavePrivateWriterContextWithdidSaveStore:(YSCoreDataOperationCompletion)didSaveStore
+- (BOOL)saveMainContextWithError:(NSError**)errorPtr
+{
+    NSParameterAssert([NSThread isMainThread]);
+    
+    NSError *error = nil;
+    if ([self saveContext:self.mainContext withError:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
+        [self saveWriterContext];
+        return YES;
+    } else {
+        if (errorPtr) *errorPtr = error;
+        if (self.didSaveStore) self.didSaveStore(self, error);
+        return NO;
+    }
+}
+
+- (void)saveWriterContext
 {
     __strong typeof(self) strongSelf = self;
-    [self.privateWriterContext performBlock:^{
+    [self.writerContext performBlock:^{
         NSError *error = nil;
-        if (![strongSelf.privateWriterContext save:&error]) { // SQLiteへ保存
+        [strongSelf saveContext:strongSelf.writerContext withError:&error]; // SQLiteへ保存
+        
+        if (strongSelf.didSaveStore) {
             dispatch_async(dispatch_get_main_queue(), ^{
-                NSLog(@"Error: privateWriterContext save; error = %@;", error);
-                if (didSaveStore) didSaveStore(strongSelf, error);
-            });
-            return ;
-        }
-        LOG_YSCORE_DATA(@"Did save privateWriterContext");
-        if (didSaveStore) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                didSaveStore(strongSelf, nil);
+                strongSelf.didSaveStore(strongSelf, error);
             });
         }
     }];
@@ -486,20 +378,6 @@ int64_t const kYSCoreDataOperationDefaultTimeoutPerSec = 30;
 {
     @synchronized(self) {
         return _isCancelled;
-    }
-}
-
-- (void)setCompleted:(BOOL)completed
-{
-    @synchronized(self) {
-        _isCompleted = completed;
-    }
-}
-
-- (BOOL)isCompleted
-{
-    @synchronized(self) {
-        return _isCompleted;
     }
 }
 

@@ -2,7 +2,7 @@
 //  User.h
 //  YSCoreDataExample
 //
-//  Created by Yu Sugawara on 2014/02/13.
+//  Created by Yu Sugawara on 2014/11/30.
 //  Copyright (c) 2014年 Yu Sugawara. All rights reserved.
 //
 
@@ -13,7 +13,7 @@
 
 @interface User : NSManagedObject
 
-@property (nonatomic, retain) NSNumber * id;
+@property (nonatomic) int64_t id;
 @property (nonatomic, retain) NSString * name;
 @property (nonatomic, retain) NSString * screen_name;
 @property (nonatomic, retain) NSSet *tweets;

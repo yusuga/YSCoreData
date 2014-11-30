@@ -21,15 +21,13 @@
     #define LOG_YSCORE_DATA(...)
 #endif
 
-extern int64_t const kYSCoreDataOperationDefaultTimeoutPerSec;
-
 @class YSCoreDataOperation;
 
-typedef void(^YSCoreDataOperationWriteConfigure)(NSManagedObjectContext *context,
-                                                 YSCoreDataOperation *operation);
+typedef void(^YSCoreDataOperationWriteBlock)(NSManagedObjectContext *context,
+                                             YSCoreDataOperation *operation);
 
-typedef NSFetchRequest*(^YSCoreDataOperationFetchRequestConfigure)(NSManagedObjectContext *context,
-                                                                   YSCoreDataOperation *operation);
+typedef NSFetchRequest*(^YSCoreDataOperationFetchRequestBlock)(NSManagedObjectContext *context,
+                                                               YSCoreDataOperation *operation);
 
 typedef void(^YSCoreDataOperationCompletion)(YSCoreDataOperation *operation, NSError *error);
 typedef void(^YSCoreDataOperationFetchCompletion)(YSCoreDataOperation *operation, NSArray *fetchResults, NSError *error);
@@ -37,46 +35,42 @@ typedef void(^YSCoreDataOperationFetchCompletion)(YSCoreDataOperation *operation
 
 @interface YSCoreDataOperation : NSObject
 
-- (id)initWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
-                   mainContext:(NSManagedObjectContext*)mainContext
-          privateWriterContext:(NSManagedObjectContext*)privateWriterContext;
+- (instancetype)initWithTemporaryContext:(NSManagedObjectContext*)temporaryContext
+                             mainContext:(NSManagedObjectContext*)mainContext
+                           writerContext:(NSManagedObjectContext*)writerContext;
 
-// sync
+/* Write */
 
-- (BOOL)writeWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                  error:(NSError**)errorPtr
-                           didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+- (BOOL)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                      error:(NSError**)errorPtr;
 
-- (NSArray*)fetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
+- (void)writeWithWriteBlock:(YSCoreDataOperationWriteBlock)writeBlock
+                 completion:(YSCoreDataOperationCompletion)completion;
+
+/* Fetch */
+
+- (NSArray*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                 error:(NSError**)errorPtr;
+
+- (void)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                        completion:(YSCoreDataOperationFetchCompletion)completion;
+
+/* Remove */
+
+- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
                                      error:(NSError**)errorPtr;
 
-- (BOOL)removeObjectsWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                         error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
-
 - (BOOL)removeAllObjectsWithManagedObjectModel:(NSManagedObjectModel*)managedObjectModel
-                                         error:(NSError**)errorPtr
-                                  didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+                                         error:(NSError**)errorPtr;
 
-// async
+- (void)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                completion:(YSCoreDataOperationCompletion)completion;
 
-- (void)asyncWriteWithConfigureManagedObject:(YSCoreDataOperationWriteConfigure)configure
-                                  completion:(YSCoreDataOperationCompletion)completion
-                                didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+/* Others */
 
-- (void)asyncFetchWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                 completion:(YSCoreDataOperationFetchCompletion)completion;
-
-- (void)asyncRemoveRecordWithConfigureFetchRequest:(YSCoreDataOperationFetchRequestConfigure)configure
-                                        completion:(YSCoreDataOperationCompletion)completion
-                                      didSaveStore:(YSCoreDataOperationCompletion)didSaveStore;
+@property (copy, nonatomic) YSCoreDataOperationCompletion didSaveStore;
 
 - (void)cancel;
 @property (nonatomic, readonly) BOOL isCancelled;
-@property (nonatomic, readonly) BOOL isCompleted;
-
-// settings
-
-+ (void)setCommonOperationTimeoutPerSec:(int64_t)perSec;
 
 @end

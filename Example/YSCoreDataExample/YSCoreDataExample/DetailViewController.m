@@ -63,13 +63,9 @@
 
 - (IBAction)insertTweetsButtonDidPush:(id)sender
 {
-    __weak typeof(self) wself = self;
-    [TwitterRequest requestTweetsWithMaxCount:self.getTweetLimit completion:^(NSArray *newTweets) {
-        // 取得したツイートをCoreDataに保存
-        wself.insertOperation = [[TwitterStorage sharedInstance] asyncInsertTweetsWithTweetJsons:newTweets
-                                                                                      completion:nil
-                                                                                    didSaveStore:nil];
-    }];
+    // 取得したツイートをCoreDataに保存
+    self.insertOperation = [[TwitterStorage sharedInstance] insertTweetsWithTweetJsons:[TwitterRequest requestTweetsWithMaxCount:self.getTweetLimit]
+                                                                            completion:nil];
 }
 
 @end
