@@ -20,17 +20,7 @@
 @implementation YSCoreDataOperation
 @synthesize isCancelled = _isCancelled;
 
-+ (dispatch_queue_t)operationDispatchQueue
-{
-    static dispatch_queue_t __queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        __queue = dispatch_queue_create("jp.YuSugawara.YSCoreDataOperation.queue", NULL);
-    });
-    return __queue;
-}
-
-#pragma mark -
+#pragma mark - Init
 
 - (instancetype)init
 {
@@ -80,22 +70,20 @@
     DDLogVerbose(@"Start %s", __func__);
     
     __strong typeof(self) strongSelf = self;
-    dispatch_async([[self class] operationDispatchQueue], ^{
-        [strongSelf.temporaryContext performBlock:^{
-            writeBlock(strongSelf.temporaryContext, strongSelf);
-            
-            if (strongSelf.isCancelled) {
-                DDLogWarn(@"Cancel %s", __func__);
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
-                    if (completion) completion(strongSelf, error);
-                    if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
-                });
-            } else {
-                [strongSelf saveTemporaryContextWithDidMergeMainContext:completion];
-            }
-        }];
-    });
+    [strongSelf.temporaryContext performBlock:^{
+        writeBlock(strongSelf.temporaryContext, strongSelf);
+        
+        if (strongSelf.isCancelled) {
+            DDLogWarn(@"Cancel %s", __func__);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
+                if (completion) completion(strongSelf, error);
+                if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
+            });
+        } else {
+            [strongSelf saveTemporaryContextWithDidMergeMainContext:completion];
+        }
+    }];
 }
 
 #pragma mark - Fetch
@@ -229,30 +217,28 @@
     DDLogVerbose(@"Start %s", __func__);
     
     __strong typeof(self) strongSelf = self;
-    dispatch_async([[self class] operationDispatchQueue], ^{
-        [strongSelf.temporaryContext performBlock:^{
-            NSError *error = nil;
-            if (![strongSelf removeObjectsWithContext:strongSelf.temporaryContext fetchRequestBlock:fetchRequestBlock error:&error]) {
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (completion) completion(strongSelf, error);
-                    if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
-                });
-                return ;
-            }
+    [strongSelf.temporaryContext performBlock:^{
+        NSError *error = nil;
+        if (![strongSelf removeObjectsWithContext:strongSelf.temporaryContext fetchRequestBlock:fetchRequestBlock error:&error]) {
             
-            if (strongSelf.isCancelled) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    DDLogWarn(@"Cancel %s;", __func__);
-                    NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
-                    if (completion) completion(strongSelf, error);
-                    if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
-                });
-            } else {
-                [strongSelf saveTemporaryContextWithDidMergeMainContext:completion];
-            }
-        }];
-    });
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (completion) completion(strongSelf, error);
+                if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
+            });
+            return ;
+        }
+        
+        if (strongSelf.isCancelled) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                DDLogWarn(@"Cancel %s;", __func__);
+                NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
+                if (completion) completion(strongSelf, error);
+                if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
+            });
+        } else {
+            [strongSelf saveTemporaryContextWithDidMergeMainContext:completion];
+        }
+    }];
 }
 
 #pragma mark Private
