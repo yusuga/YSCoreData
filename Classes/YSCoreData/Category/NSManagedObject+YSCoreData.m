@@ -15,4 +15,9 @@
     return NSStringFromClass([self class]);
 }
 
+- (NSString *)ys_entityName
+{
+    return [[self class] ys_entityName];
+}
+
 @end

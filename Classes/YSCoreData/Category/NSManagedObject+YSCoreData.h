@@ -11,5 +11,6 @@
 @interface NSManagedObject (YSCoreData)
 
 + (NSString*)ys_entityName;
+- (NSString*)ys_entityName;
 
 @end
