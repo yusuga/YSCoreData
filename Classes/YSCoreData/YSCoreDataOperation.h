@@ -10,17 +10,6 @@
 @import CoreData;
 #import "YSCoreDataError.h"
 
-#if DEBUG
-    #if 0
-        #warning enable debug log
-        #define LOG_YSCORE_DATA(...) NSLog(__VA_ARGS__)
-    #endif
-#endif
-
-#ifndef LOG_YSCORE_DATA
-    #define LOG_YSCORE_DATA(...)
-#endif
-
 @class YSCoreDataOperation;
 
 typedef void(^YSCoreDataOperationWriteBlock)(NSManagedObjectContext *context,

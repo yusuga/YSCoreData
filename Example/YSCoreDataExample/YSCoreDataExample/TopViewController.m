@@ -26,9 +26,9 @@
 {
     [super viewWillAppear:animated];
     
-    TwitterStorage *ts = [TwitterStorage sharedInstance];
-    NSLog(@"count Tweet = %@", @([ts countTweetObjects]));
-    NSLog(@"count User = %@", @([ts countUserObjects]));
+    TwitterStorage *storage = [TwitterStorage sharedInstance];
+    NSLog(@"count Tweet = %@", @([storage countTweetObjects]));
+    NSLog(@"count User = %@", @([storage countUserObjects]));
 }
 
 #pragma mark - Button action

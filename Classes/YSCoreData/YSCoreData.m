@@ -101,7 +101,7 @@
 
 - (BOOL)deleteDatabase
 {
-    NSLog(@"%s", __func__);
+    DDLogWarn(@"%s", __func__);
     NSString *path = self.databaseFullPath;
     NSFileManager *fileManager = [[NSFileManager alloc] init];
     BOOL ret = [fileManager removeItemAtPath:path error:NULL];
@@ -121,7 +121,6 @@
      parentContextにmainContextを指定することによって、temporaryContextはこの時点でmainContextが保持しているNSManagedObjectを
      参照することができる
      */
-    LOG_YSCORE_DATA(@"%s", __func__);
     NSManagedObjectContext *temporaryContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     temporaryContext.parentContext = self.mainContext;
     return temporaryContext;
@@ -238,17 +237,15 @@
 - (NSPersistentStoreCoordinator *)persistentStoreCoordinator
 {
     if (_persistentStoreCoordinator == nil) {
-        LOG_YSCORE_DATA(@"Init %s", __func__);
+        DDLogVerbose(@"Init persistentStoreCoordinator");
         NSURL *url = [NSURL fileURLWithPath:self.databaseFullPath];
         NSError *error = nil;
         _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:self.managedObjectModel];
         if (![_persistentStoreCoordinator addPersistentStoreWithType:self.storeType configuration:nil URL:url options:nil error:&error]) {
             NSAssert1(0, @"NSPersistentStoreCoordinator error: %@", error);
-            NSLog(@"NSPersistentStoreCoordinator error: %@", error);
+            DDLogError(@"NSPersistentStoreCoordinator error: %@", error);
         }
-#if DEBUG
-        NSLog(@"Database full path = %@", self.databaseFullPath);
-#endif
+        DDLogVerbose(@"Database full path = %@", self.databaseFullPath);
     }
     return _persistentStoreCoordinator;
 }
@@ -256,7 +253,7 @@
 - (NSManagedObjectModel *)managedObjectModel
 {
     if (_managedObjectModel == nil) {
-        LOG_YSCORE_DATA(@"Init %s", __func__);
+        DDLogVerbose(@"Init managedObjectModel");
         if (self.modelName) {
             NSURL *modelUrl;
             if ([self.modelName pathExtension].length) {
@@ -274,24 +271,24 @@
     return _managedObjectModel;
 }
 
-- (NSManagedObjectContext *)writerContext
-{
-    if (_writerContext == nil) {
-        LOG_YSCORE_DATA(@"Init %s", __func__);
-        _writerContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
-        _writerContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
-    }
-    return _writerContext;
-}
-
 - (NSManagedObjectContext *)mainContext
 {
     if (_mainContext == nil) {
-        LOG_YSCORE_DATA(@"Init %s", __func__);
+        DDLogVerbose(@"Init mainContext");
         _mainContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType];
         _mainContext.parentContext = self.writerContext;
     }
     return _mainContext;
+}
+
+- (NSManagedObjectContext *)writerContext
+{
+    if (_writerContext == nil) {
+        DDLogVerbose(@"Init writerContext");
+        _writerContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        _writerContext.persistentStoreCoordinator = self.persistentStoreCoordinator;
+    }
+    return _writerContext;
 }
 
 @end

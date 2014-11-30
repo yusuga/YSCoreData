@@ -65,6 +65,7 @@
 {
     NSParameterAssert([NSThread isMainThread]);
     NSParameterAssert(writeBlock);
+    DDLogVerbose(@"Start %s", __func__);
     
     writeBlock(self.mainContext, self);
     return [self saveMainContextWithError:errorPtr];
@@ -76,6 +77,7 @@
                  completion:(YSCoreDataOperationCompletion)completion
 {
     NSParameterAssert(writeBlock);
+    DDLogVerbose(@"Start %s", __func__);
     
     __strong typeof(self) strongSelf = self;
     dispatch_async([[self class] operationDispatchQueue], ^{
@@ -83,6 +85,7 @@
             writeBlock(strongSelf.temporaryContext, strongSelf);
             
             if (strongSelf.isCancelled) {
+                DDLogWarn(@"Cancel %s", __func__);
                 dispatch_async(dispatch_get_main_queue(), ^{
                     NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeWrite];
                     if (completion) completion(strongSelf, error);
@@ -101,6 +104,7 @@
                                  error:(NSError**)errorPtr
 {
     NSParameterAssert(fetchRequestBlock);
+    DDLogVerbose(@"Start %s", __func__);
     
     return [self executeFetchRequestWithContext:self.mainContext
                               fetchRequestBlock:fetchRequestBlock
@@ -110,6 +114,9 @@
 - (void)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
                         completion:(YSCoreDataOperationFetchCompletion)completion
 {
+    NSParameterAssert(fetchRequestBlock);
+    DDLogVerbose(@"Start %s", __func__);
+    
     __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
@@ -136,7 +143,7 @@
         [strongSelf.mainContext performBlock:^{ // == dispatch_async(dispatch_get_main_queue(), ^{
             
             if (strongSelf.isCancelled) {
-                LOG_YSCORE_DATA(@"Cancel: asyncFetch;");
+                DDLogWarn(@"Cancel %s", __func__);
                 if (completion) completion(strongSelf,
                                            nil,
                                            [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch]);
@@ -159,14 +166,13 @@
                 NSError *error = nil;
                 NSManagedObject *obj = [strongSelf.mainContext existingObjectWithID:objID error:&error];
                 if (obj == nil || error) {
-                    NSLog(@"Error: Fetch; error = %@;", error);
+                    DDLogError(@"%s; existingObject error = %@", __func__, error);
                     if (completion) completion(strongSelf, nil, error);
                     return;
                 }
                 [fetchResults addObject:obj];
             }
-            LOG_YSCORE_DATA(@"Success: Fetch %@", @([fetchResults count]));
-            
+            DDLogDebug(@"%s; fetchResults.count = %zd", __func__, [fetchResults count]);
             if (completion) completion(strongSelf, [NSArray arrayWithArray:fetchResults], nil);
         }];
     }];
@@ -179,6 +185,7 @@
                                      error:(NSError**)errorPtr
 {
     NSParameterAssert([NSThread isMainThread]);
+    DDLogVerbose(@"Start %s", __func__);
     
     NSError *error = nil;
     if ([self removeObjectsWithContext:self.mainContext fetchRequestBlock:fetchRequestBlock error:&error]) {
@@ -195,6 +202,7 @@
                                          error:(NSError**)errorPtr
 {
     NSParameterAssert([NSThread isMainThread]);
+    DDLogVerbose(@"Start %s", __func__);
     
     for (NSEntityDescription *entity in [managedObjectModel entities]) {
         NSError *error = nil;
@@ -203,9 +211,7 @@
             req.entity = entity;
             return req;
         } error:&error]) {
-            if (error && errorPtr != NULL) {
-                *errorPtr = error;
-            }
+            if (error && errorPtr) *errorPtr = error;
             if (self.didSaveStore) self.didSaveStore(self, error);
             return NO;
         }
@@ -220,6 +226,7 @@
                                 completion:(YSCoreDataOperationCompletion)completion
 {
     NSParameterAssert(fetchRequestBlock);
+    DDLogVerbose(@"Start %s", __func__);
     
     __strong typeof(self) strongSelf = self;
     dispatch_async([[self class] operationDispatchQueue], ^{
@@ -236,6 +243,7 @@
             
             if (strongSelf.isCancelled) {
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    DDLogWarn(@"Cancel %s;", __func__);
                     NSError *error = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeRemove];
                     if (completion) completion(strongSelf, error);
                     if (strongSelf.didSaveStore) strongSelf.didSaveStore(strongSelf, error);
@@ -257,6 +265,7 @@
     NSArray *results = [self executeFetchRequestWithContext:context fetchRequestBlock:fetchRequestBlock error:&error];
     
     if (error) {
+        DDLogError(@"%s; error = %@", __func__, error);
         if (errorPtr) *errorPtr = error;
         return NO;
     }
@@ -274,33 +283,26 @@
 {
     NSFetchRequest *req = fetchRequestBlock(context, self);
     if (req == nil) {
-        NSString *desc = @"Fetch request is nil";
+        NSError *error = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:@"fetchRequestBlock return value is nil."];
+        DDLogError(@"%s; error = %@;", __func__, error);
         if (errorPtr != NULL) {
-            *errorPtr = [YSCoreDataError requiredArgumentIsNilErrorWithDescription:desc];
+            *errorPtr = error;
         }
+        return nil;
+    }
+    
+    NSError *error = nil;
+    NSArray *results = [context executeFetchRequest:req error:&error];
+    
+    if (error) {
+        DDLogError(@"%s; error = %@", __func__, error);
+        if (errorPtr) *errorPtr = error;
         return nil;
     }
     
     if (self.isCancelled) {
-        LOG_YSCORE_DATA(@"Cancel: asyncFetch; will execute fetch request;");
-        if (errorPtr) {
-            *errorPtr = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
-        }
-        return nil;
-    }
-    
-    NSArray *results = [context executeFetchRequest:req error:errorPtr];
-    
-    if (errorPtr && *errorPtr) {
-        LOG_YSCORE_DATA(@"Error: -executeFetchRequest:error:; error = %@;", *error);
-        return nil;
-    }
-    
-    if (self.isCancelled) {
-        LOG_YSCORE_DATA(@"Cancel: asyncFetch; did execute fetch request;");
-        if (errorPtr) {
-            *errorPtr = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
-        }
+        DDLogWarn(@"Cancel %s;", __func__);
+        if (errorPtr) *errorPtr = [YSCoreDataError cancelErrorWithType:YSCoreDataErrorOperationTypeFetch];
         return nil;
     }
     
@@ -322,7 +324,11 @@
     __strong typeof(self) strongSelf = self;
     [self.temporaryContext performBlock:^{
         NSError *error = nil;
-        [strongSelf saveContext:strongSelf.temporaryContext withError:&error]; // mainContextに変更をプッシュ(マージされる)
+        if ([strongSelf saveContext:strongSelf.temporaryContext withError:&error]) { // mainContextに変更をプッシュ(マージされる)
+            DDLogDebug(@"Success %s;", __func__);
+        } else {
+            DDLogError(@"%s; error = %@;", __func__, error);
+        }
         
         dispatch_async(dispatch_get_main_queue(), ^{
             if (didMergeMainContext) {
@@ -341,9 +347,11 @@
     
     NSError *error = nil;
     if ([self saveContext:self.mainContext withError:&error]) { // privateWriterContextに変更をプッシュ(マージされる)
+        DDLogDebug(@"Success %s;", __func__);
         [self saveWriterContext];
         return YES;
     } else {
+        DDLogError(@"%s; error = %@", __func__, error);
         if (errorPtr) *errorPtr = error;
         if (self.didSaveStore) self.didSaveStore(self, error);
         return NO;
@@ -355,7 +363,11 @@
     __strong typeof(self) strongSelf = self;
     [self.writerContext performBlock:^{
         NSError *error = nil;
-        [strongSelf saveContext:strongSelf.writerContext withError:&error]; // SQLiteへ保存
+        if ([strongSelf saveContext:strongSelf.writerContext withError:&error]) { // SQLiteへ保存
+            DDLogDebug(@"Success %s;", __func__);
+        } else {
+            DDLogError(@"%s; error = %@", __func__, error);
+        }
         
         if (strongSelf.didSaveStore) {
             dispatch_async(dispatch_get_main_queue(), ^{
