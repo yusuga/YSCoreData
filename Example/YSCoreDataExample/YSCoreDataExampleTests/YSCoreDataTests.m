@@ -96,7 +96,7 @@
     [Utility enumerateAllCoreDataUsingBlock:^(YSCoreData *coreData) {
         XCTestExpectation *expectation = [self expectationWithDescription:nil];
         
-        YSCoreDataOperation *ope = [coreData removeObjectsWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+        YSCoreDataOperation *ope = [coreData removeWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
             XCTAssertFalse([NSThread isMainThread]);
             XCTAssertNotNil(context);
             XCTAssertNotNil(operation);

@@ -59,7 +59,7 @@
              case 2:
              {
                  NSError *error = nil;
-                 if ([storage removeAllObjectsWithError:&error]) {
+                 if ([storage removeAllWithError:&error]) {
                      NSLog(@"removeAllObjects: Success");
                  } else {
                      [[[UIAlertView alloc] initWithTitle:@"Error: removeAllObjects"

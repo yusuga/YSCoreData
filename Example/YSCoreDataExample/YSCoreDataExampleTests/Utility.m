@@ -162,7 +162,7 @@ NSString * const kTwitterStorageOfMainBundlePath = @"Twitter.db";
 + (void)removeAllObjectsOfCoreData:(YSCoreData*)coreData
 {
     NSError *error = nil;
-    [coreData removeAllObjectsWithError:&error];
+    [coreData removeAllWithError:&error];
     NSAssert1(error == nil, @"error: %@", error);
 }
 

@@ -53,13 +53,13 @@ typedef enum {
 
 /* Remove */
 
-- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                     error:(NSError **)errorPtr;
+- (BOOL)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                              error:(NSError **)errorPtr;
 
-- (BOOL)removeAllObjectsWithError:(NSError **)errorPtr;
+- (BOOL)removeAllWithError:(NSError **)errorPtr;
 
-- (YSCoreDataOperation*)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                                completion:(YSCoreDataOperationCompletion)completion;
+- (YSCoreDataOperation*)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                         completion:(YSCoreDataOperationCompletion)completion;
 
 /* Count */
 

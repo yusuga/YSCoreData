@@ -154,13 +154,13 @@
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
-                                                                writerContext:self.writerContext];
+                                                                       writerContext:self.writerContext];
     
     return [ope fetchWithFetchRequestBlock:fetchRequestBlock error:errorPtr];
 }
 
 - (YSCoreDataOperation*)fetchWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                             completion:(YSCoreDataOperationFetchCompletion)completion
+                                        completion:(YSCoreDataOperationFetchCompletion)completion
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:[self newTemporaryContext]
                                                                          mainContext:self.mainContext
@@ -172,8 +172,8 @@
 
 #pragma mark - remove
 
-- (BOOL)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                     error:(NSError *__autoreleasing *)errorPtr
+- (BOOL)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                              error:(NSError *__autoreleasing *)errorPtr
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
@@ -182,7 +182,7 @@
     return [ope removeWithFetchRequestBlock:fetchRequestBlock error:errorPtr];
 }
 
-- (BOOL)removeAllObjectsWithError:(NSError **)errorPtr
+- (BOOL)removeAllWithError:(NSError **)errorPtr
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:self.mainContext
                                                                          mainContext:self.mainContext
@@ -191,8 +191,8 @@
     return [ope removeAllWithManagedObjectModel:self.managedObjectModel error:errorPtr];
 }
 
-- (YSCoreDataOperation*)removeObjectsWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
-                                                completion:(YSCoreDataOperationCompletion)completion
+- (YSCoreDataOperation*)removeWithFetchRequestBlock:(YSCoreDataOperationFetchRequestBlock)fetchRequestBlock
+                                         completion:(YSCoreDataOperationCompletion)completion
 {
     YSCoreDataOperation *ope = [[YSCoreDataOperation alloc] initWithTemporaryContext:[self newTemporaryContext]
                                                                          mainContext:self.mainContext

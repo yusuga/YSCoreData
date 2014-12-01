@@ -155,14 +155,14 @@
 - (BOOL)removeAllTweetsWithError:(NSError**)errorPtr
 {
     __weak typeof(self) wself = self;
-    return [self removeObjectsWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+    return [self removeWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         return [wself removeAllTweetRecordRequestWithContext:context];
     } error:errorPtr];
 }
 
 - (YSCoreDataOperation *)removeAllTweetsWithCompletion:(YSCoreDataOperationCompletion)completion
 {
-    return [self removeObjectsWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
+    return [self removeWithFetchRequestBlock:^NSFetchRequest *(NSManagedObjectContext *context, YSCoreDataOperation *operation) {
         return [self removeAllTweetRecordRequestWithContext:context];
     } completion:completion];
 }
